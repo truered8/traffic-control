@@ -197,12 +197,14 @@ if __name__ == '__main__':
 
 
   SPEED = 8
-  TRIALS = 1
+  TRIALS = 15
   SIM_LENGTH = 500
 
-  controls = [custom]
-  frequencies = [50]
+  controls = [timed, custom]
+  frequencies = [400, 500, 750, 1000, 1500, 2000]
 
+  if not os.path.exists('logs'):
+    os.makedirs('logs')
 
   for control in controls:
     for frequency in frequencies:
@@ -215,6 +217,8 @@ if __name__ == '__main__':
       screen = pygame.display.set_mode((DISPLAY_WIDTH, DISPLAY_HEIGHT))
       pygame.display.set_caption('Simulation')
 
+      with open(f'logs/control-{control.__name__}-frequency-{frequency}.txt', 'w') as file:
+        file.write(f'\nTime: {datetime.datetime.now()}')
 
       for i in range(TRIALS):
 
@@ -234,13 +238,14 @@ if __name__ == '__main__':
         lanes.append(Lane(LANE_WIDTH, HORZ_LANE_LENGTH, 'left', ((DISPLAY_WIDTH // 2 - LANE_WIDTH) // 2, (DISPLAY_HEIGHT - LANE_WIDTH) // 2), screen))
         road.add(*lanes)
         
-        main(control, SIM_LENGTH, frequency, 40, 150)
+        main(control, SIM_LENGTH, frequency, 40, 100)
 
-        print(f'\nWait Time: {total_wait - last_wait}')
+        with open(f'logs/control-{control.__name__}-frequency-{frequency}.txt', 'a') as file:
+          file.write(f'\nWait Time: {total_wait - last_wait}')
         last_wait = total_wait
 
-      print(f'\nAverage frames waited: {total_wait // TRIALS}')
-      
+      with open(f'logs/control-{control.__name__}-frequency-{frequency}.txt', 'a') as file:
+        file.write(f'\nAverage frames waited: {total_wait // TRIALS}')
       pygame.quit()
 
   quit()

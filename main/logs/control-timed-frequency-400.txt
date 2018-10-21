@@ -1,0 +1,9 @@
+
+Time: 2018-10-21 10:34:55.596652
+Wait Time: 828
+Wait Time: 762
+Wait Time: 868
+Wait Time: 903
+Wait Time: 844
+Wait Time: 725
+Average frames waited: 817

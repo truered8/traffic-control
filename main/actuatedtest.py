@@ -80,15 +80,6 @@ def main(control, sim_length, frequency, dmin, dmax):
         if event.key == pygame.K_q:
           pygame.quit()
           quit()
-
-    '''
-    i = 6
-    l = lanes[i]
-    g = random.choice(['straight', 'left', 'right'])
-    c = Car(l.start, l.direction, SPEED, g, screen)
-    c.start = i
-    cars.add(c)
-    '''
     
     if count % int(200 / SPEED) == 0:
       i = random.choice(range(0, 7, 2))
@@ -155,16 +146,22 @@ if __name__ == '__main__':
         if len(l.cars) != 0:
           return False
       return True
-
     hlanes = [lanes[2], lanes[6]]
     vlanes = [lanes[0], lanes[4]]
+
+    switched = False
     if count % frequency == 0:
       switch = is_empty(hlanes) if intersection.flow == 'horizontal' else is_empty(vlanes)
-      if switch and duration > dmin and duration < dmax:
+      if switch and duration > dmin:
         intersection.flow = reverse(intersection.flow)
+        switched = True
         duration = 0
-      else:
-        duration += 1
+      elif duration > dmax:
+        intersection.flow = reverse(intersection.flow)
+        switched = True
+        duration = 0
+    if not switched:
+      duration += 1
 
   reverse = lambda flow: {'horizontal': 'vertical'}.get(flow, 'horizontal')
 
@@ -196,16 +193,22 @@ if __name__ == '__main__':
   CENTER = (DISPLAY_WIDTH // 2, DISPLAY_HEIGHT // 2)
 
 
-  SPEED = 8
-  TRIALS = 1
+  SPEED = 15
+  TRIALS = 15
   SIM_LENGTH = 500
 
-  controls = [custom]
-  frequencies = [50]
+  frequencies = range(130, 200, 10)
+  dmins = range(20, 150, 10)
+  dmaxs = range(400, 1500, 100)
 
+  '''
+  with open('actuated.log', 'w') as file:
+    file.write('')
+  '''
+  frequency = 200
 
-  for control in controls:
-    for frequency in frequencies:
+  for dmax in dmaxs:
+    for dmin in dmins:
 
       count = 0
       total_wait = 0
@@ -214,7 +217,6 @@ if __name__ == '__main__':
       pygame.init()
       screen = pygame.display.set_mode((DISPLAY_WIDTH, DISPLAY_HEIGHT))
       pygame.display.set_caption('Simulation')
-
 
       for i in range(TRIALS):
 
@@ -234,13 +236,10 @@ if __name__ == '__main__':
         lanes.append(Lane(LANE_WIDTH, HORZ_LANE_LENGTH, 'left', ((DISPLAY_WIDTH // 2 - LANE_WIDTH) // 2, (DISPLAY_HEIGHT - LANE_WIDTH) // 2), screen))
         road.add(*lanes)
         
-        main(control, SIM_LENGTH, frequency, 40, 150)
-
-        print(f'\nWait Time: {total_wait - last_wait}')
-        last_wait = total_wait
-
-      print(f'\nAverage frames waited: {total_wait // TRIALS}')
-      
+        main(actuated, SIM_LENGTH, frequency, dmin, dmax)
+      with open('actuated.log', 'a') as file:
+        file.write(f'\nFrequency: {frequency}; dMin: {dmin}; dMax: {dmax}')
+        file.write(f'\nAverage frames waited: {total_wait // TRIALS}')
       pygame.quit()
 
   quit()

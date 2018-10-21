@@ -1,0 +1,105 @@
+█ [ C:\Users\Babtu\eclipse-workspace\TrafficControl\main ] git add .
+warning: adding embedded git repository: main/vehicle_detection_haarcascades
+hint: You've added another git repository inside your current repository.
+hint: Clones of the outer repository will not contain the contents of
+hint: the embedded repository and will not know how to obtain it.
+hint: If you meant to add a submodule, use:
+hint: 
+hint: 	git submodule add <url> main/vehicle_detection_haarcascades
+hint: 
+hint: If you added this path by mistake, you can remove it from the
+hint: index with:
+hint: 
+hint: 	git rm --cached main/vehicle_detection_haarcascades
+hint: 
+hint: See "git help submodule" for more information.
+
+█ [ C:\Users\Babtu\eclipse-workspace\TrafficControl\main ] git commit -m 'added actuated control'
+error: pathspec 'actuated' did not match any file(s) known to git.
+error: pathspec 'control' did not match any file(s) known to git.
+
+█ [ C:\Users\Babtu\eclipse-workspace\TrafficControl\main ] git push
+fatal: The current branch develop has no upstream branch.
+To push the current branch and set the remote as upstream, use
+
+    git push --set-upstream origin develop
+
+
+█ [ C:\Users\Babtu\eclipse-workspace\TrafficControl\main ] git clone https://github.com/andrewssobral/vehicle_detection_haarcascades
+Cloning into 'vehicle_detection_haarcascades'...
+
+█ [ C:\Users\Babtu\eclipse-workspace\TrafficControl\main ] exit
+Bye Bye. ♥ Glue
+█ [ C:\Users\Babtu\eclipse-workspace\TrafficControl\main ] py
+'py' is not recognized as an internal or external command,
+
+operable program or batch file.
+
+
+█ [ C:\Users\Babtu\eclipse-workspace\TrafficControl\main ] import time
+'import' is not recognized as an internal or external command,
+
+operable program or batch file.
+
+
+█ [ C:\Users\Babtu\eclipse-workspace\TrafficControl\main ] print(time.time)
+Unable to initialize device PRN
+
+█ [ C:\Users\Babtu\eclipse-workspace\TrafficControl\main ] python
+
+█ [ C:\Users\Babtu\eclipse-workspace\TrafficControl\main ] import time
+'import' is not recognized as an internal or external command,
+
+operable program or batch file.
+
+
+█ [ C:\Users\Babtu\eclipse-workspace\TrafficControl\main ] exit
+Bye Bye. ♥ Glue
+█ [ C:█ [ C:\Users\Babtu\eclipse-workspace\TrafficControl\main ] py simtest.oy
+C:\Users\Babtu\AppData\Local\Programs\Python\Python36\python.exe: can't open file 'simtest.oy': [Errno 2] No such file or directory
+
+█ [ C:\Users\Babtu\eclipse-workspace\TrafficControl\main ] py simtest.py
+pygame 1.9.4
+Hello from the pygame community. https://www.pygame.org/contribute.html
+
+\Users\Babtu\eclipse-workspace\TrafficControl\main ] py simtest.py
+pygame 1.9.4
+Hello from the pygame community. https://www.pygame.org/contribute.html
+
+█ [ C:\Users\Babtu\eclipse-workspace\TrafficControl\main ] py simtest.[y
+C:\Users\Babtu\AppData\Local\Programs\Python\Python36\python.exe: can't open file 'simtest.[y': [Errno 2] No such file or directory
+
+█ [ C:\Users\Babtu\eclipse-workspace\TrafficControl\main ] py simtest.py
+pygame 1.9.4
+Hello from the pygame community. https://www.pygame.org/contribute.html
+
+█ [ C:\Users\Babtu\eclipse-workspace\TrafficControl\main ] py simtest.py
+pygame 1.9.4
+Hello from the pygame community. https://www.pygame.org/contribute.html
+
+█ [ C:\Users\Babtu\eclipse-workspace\TrafficControl\main ] py simtest.py
+pygame 1.9.4
+Hello from the pygame community. https://www.pygame.org/contribute.html
+
+█ [ C:\Users\Babtu\eclipse-workspace\TrafficControl\main ] py simtest.py
+pygame 1.9.4
+
+Hello from the pygame community. https://www.pygame.org/contribute.html
+
+Traceback (most recent call last):
+
+  File "simtest.py", line 212, in <module>
+
+    main(control, SIM_LENGTH)
+
+  File "simtest.py", line 119, in main
+
+    total_wait += 1
+
+NameError: name 'total_wait' is not defined
+█ [ C:\Users\Babtu\eclipse-workspace\TrafficControl\main ] py simtest.py
+pygame 1.9.4
+Hello from the pygame community. https://www.pygame.org/contribute.html
+
+
+
