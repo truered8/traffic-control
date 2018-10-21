@@ -1,2 +1,5 @@
 test
-main/terminal.glue
+.vscode
+\main\terminal.glue
+.project
+.pydevproject
