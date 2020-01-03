@@ -72,7 +72,6 @@ class Car(pygame.sprite.Sprite):
 			else:
 				self.front = self.rect.midright
 				self.back = self.rect.midleft
-			
 
 
 		def update(self, road):
@@ -113,11 +112,7 @@ class Car(pygame.sprite.Sprite):
 			 #check if car has left screen
 			if not self.screen.get_rect().colliderect(self.rect):
 				self.kill()
-				del self
-				
-
-						
-			
+				del self	
 
 	
 class Middle(pygame.sprite.Sprite):
@@ -150,10 +145,6 @@ class Middle(pygame.sprite.Sprite):
 			if self.rect.contains(c):
 				self.incars.append(c)
 		
-
-
-
-
 
 class Lane(pygame.sprite.Sprite):
 	''' A single lane '''
