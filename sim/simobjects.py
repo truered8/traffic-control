@@ -191,5 +191,27 @@ class Lane(pygame.sprite.Sprite):
 			if self in c.position:
 				self.cars.append(c)
 
+class Intersection:
+	''' A 4-way intersection '''
+	def __init__(self, width, height, screen):
 
-	
+		LANE_WIDTH = int(width * 0.1)
+		VERT_LANE_LENGTH = height // 2 - LANE_WIDTH
+		HORZ_LANE_LENGTH = (width // 2 - LANE_WIDTH)
+		CENTER = (height // 2, height // 2)
+
+		self.middle = Middle(LANE_WIDTH * 2, LANE_WIDTH * 2, CENTER, screen)
+		self.lanes = []
+		self.lanes.append(Lane(LANE_WIDTH, VERT_LANE_LENGTH, 'down', ((width - LANE_WIDTH) // 2, (height - VERT_LANE_LENGTH) // 2 - LANE_WIDTH), screen))
+		self.lanes.append(Lane(LANE_WIDTH, VERT_LANE_LENGTH, 'up', ((width + LANE_WIDTH) // 2, (height - VERT_LANE_LENGTH) // 2 - LANE_WIDTH), screen))
+		self.lanes.append(Lane(LANE_WIDTH, HORZ_LANE_LENGTH, 'left', ((width + HORZ_LANE_LENGTH) // 2 + LANE_WIDTH, (height - LANE_WIDTH) // 2), screen))
+		self.lanes.append(Lane(LANE_WIDTH, HORZ_LANE_LENGTH, 'right', ((width + HORZ_LANE_LENGTH) // 2 + LANE_WIDTH, (height + LANE_WIDTH) // 2), screen))
+		self.lanes.append(Lane(LANE_WIDTH, VERT_LANE_LENGTH, 'up', ((width + LANE_WIDTH) // 2, (height + VERT_LANE_LENGTH) // 2 + LANE_WIDTH), screen))
+		self.lanes.append(Lane(LANE_WIDTH, VERT_LANE_LENGTH, 'down', ((width - LANE_WIDTH) // 2, (height + VERT_LANE_LENGTH) // 2 + LANE_WIDTH), screen))
+		self.lanes.append(Lane(LANE_WIDTH, HORZ_LANE_LENGTH, 'right', ((width // 2 - LANE_WIDTH) // 2, (height + LANE_WIDTH) // 2), screen))
+		self.lanes.append(Lane(LANE_WIDTH, HORZ_LANE_LENGTH, 'left', ((width // 2 - LANE_WIDTH) // 2, (height - LANE_WIDTH) // 2), screen))
+		
+		self.sprites = pygame.sprite.Group()
+		self.sprites.add(self.middle)
+		self.sprites.add(self.lanes)
+
