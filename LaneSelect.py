@@ -35,7 +35,7 @@ def select_lanes(args):
 					pts.append((x,y))
 					cv2.circle(image,(x,y),7,(255,0,0),-1)
 			elif mode == 'delete':
-				lanes.pop()
+				if len(lanes) > 0: lanes.pop()
 				mode = None
 				print('Lane Deleted!')
 			else:
@@ -95,7 +95,7 @@ def select_lanes(args):
 
 if __name__ == '__main__':
 	ap = argparse.ArgumentParser()
-	ap.add_argument('-p','--path',help='Path to the input image')
+	ap.add_argument('-p','--path',help='Path to the input image',required=True)
 	ap.add_argument('-s','--saved',help='Path to where the saved image should go',
 					required=False)
 	args = vars(ap.parse_args())
