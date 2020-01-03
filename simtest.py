@@ -155,7 +155,7 @@ if __name__ == '__main__':
         hlanes = [lanes[2], lanes[6]]
         vlanes = [lanes[0], lanes[4]]
         if count % frequency == 0:
-            intersection.flow = 'horizontal' if sum([len(l.cars) for l in hlanes]) > sum([len(l.cars) for l in vlanes]) else 'vertical'
+            middle.flow = 'horizontal' if sum([len(l.cars) for l in hlanes]) > sum([len(l.cars) for l in vlanes]) else 'vertical'
         
     def actuated(frequency, dmin, dmax):
         global duration
@@ -197,7 +197,7 @@ if __name__ == '__main__':
     TRIALS = 1
     SIM_LENGTH = 500
 
-    controls = [timed]
+    controls = [actuated]
     frequencies = [50]
 
 
