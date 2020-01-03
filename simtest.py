@@ -5,7 +5,7 @@ import pygame
 from sim.simobjects import *
 
 def main(control, sim_length, frequency, dmin, dmax):
-    global screen, clock, reverse, lanes, intersection, cars, intersection, total_wait, count, \
+    global screen, clock, reverse, intersection, cars, intersection, total_wait, count, \
     LANE_WIDTH, SPEED, SCREEN_SIZE
 
     def _text_objects(text, font):
@@ -62,7 +62,7 @@ def main(control, sim_length, frequency, dmin, dmax):
         } [lane] [turn]
 
     i = random.choice(range(1))
-    l = lanes[i]
+    l = intersection.lanes[i]
     car = Car(l.start, l.direction, SPEED, random.choice(['straight','right','left']), screen)
     car.start = i
     cars.add(car)
@@ -85,7 +85,7 @@ def main(control, sim_length, frequency, dmin, dmax):
 
         if count % int(200 / SPEED) == 0:
             i = random.choice(range(0, 7, 2))
-            l = lanes[i]
+            l = intersection.lanes[i]
             g = random.choice(['straight', 'left', 'right'])
             c = Car(l.start, l.direction, SPEED, g, screen)
             c.start = i
@@ -95,15 +95,15 @@ def main(control, sim_length, frequency, dmin, dmax):
             
             c.speed = SPEED
             
-            if c.rect.colliderect(middle.rect):
-                if not middle.rect.contains(c.rect):
-                    if middle.flow != c.orientation and c.rect.colliderect(lanes[c.start]):
+            if c.rect.colliderect(intersection.middle.rect):
+                if not intersection.middle.rect.contains(c.rect):
+                    if intersection.middle.flow != c.orientation and c.rect.colliderect(intersection.lanes[c.start]):
                         c.speed = 0
-                    if reverse(c.orientation) in [d.orientation for d in middle.incars] and c.rect.colliderect(lanes[c.start]):
+                    if reverse(c.orientation) in [d.orientation for d in intersection.middle.incars] and c.rect.colliderect(intersection.lanes[c.start]):
                         c.speed = 0
                 else:
                     if c.goal != 'straight':
-                        t = middle.turns[get_turn(c.start, c.goal)]
+                        t = intersection.middle.turns[get_turn(c.start, c.goal)]
                         if approx(c.rect.center, t) and not c.turned:
                             c.direction = rotate(c.direction, c.goal)
                             c.turned = True
@@ -114,12 +114,12 @@ def main(control, sim_length, frequency, dmin, dmax):
         control(frequency, dmin, dmax)
 
 
-        intersection.update(cars.sprites())
-        cars.update(intersection.sprites())
+        intersection.sprites.update(cars.sprites())
+        cars.update(intersection.sprites.sprites())
         
         screen.fill(YELLOW)
 
-        intersection.draw(screen)
+        intersection.sprites.draw(screen)
         cars.draw(screen)
 
         
@@ -129,8 +129,8 @@ def main(control, sim_length, frequency, dmin, dmax):
 
         count += 1
 
-''' Get information on the screen the program is running on '''
 def get_screen_metrics():
+    ''' Get information on the screen the program is running on '''
     user32 = ctypes.windll.user32
     SCREEN_SIZE = user32.GetSystemMetrics(0), user32.GetSystemMetrics(1)
     COMBINED_SCREEN_SIZE = user32.GetSystemMetrics(78), user32.GetSystemMetrics(79)
@@ -149,13 +149,13 @@ if __name__ == '__main__':
 
     def timed(frequency, *args):
         if count % frequency == 0:
-            middle.flow = reverse(middle.flow)
+            intersection.middle.flow = reverse(intersection.middle.flow)
 
     def custom(frequency, *args):
-        hlanes = [lanes[2], lanes[6]]
-        vlanes = [lanes[0], lanes[4]]
+        hlanes = [intersection.lanes[2], intersection.lanes[6]]
+        vlanes = [intersection.lanes[0], intersection.lanes[4]]
         if count % frequency == 0:
-            intersection.flow = 'horizontal' if sum([len(l.cars) for l in hlanes]) > sum([len(l.cars) for l in vlanes]) else 'vertical'
+            intersection.middle.flow = 'horizontal' if sum([len(l.cars) for l in hlanes]) > sum([len(l.cars) for l in vlanes]) else 'vertical'
         
     def actuated(frequency, dmin, dmax):
         global duration
@@ -165,12 +165,12 @@ if __name__ == '__main__':
                     return False
             return True
 
-        hlanes = [lanes[2], lanes[6]]
-        vlanes = [lanes[0], lanes[4]]
+        hlanes = [intersection.lanes[2], intersection.lanes[6]]
+        vlanes = [intersection.lanes[0], intersection.lanes[4]]
         if count % frequency == 0:
-            switch = is_empty(hlanes) if middle.flow == 'horizontal' else is_empty(vlanes)
+            switch = is_empty(hlanes) if intersection.middle.flow == 'horizontal' else is_empty(vlanes)
             if switch and duration > dmin and duration < dmax:
-                intersection.flow = reverse(intersection.flow)
+                intersection.middle.flow = reverse(intersection.middle.flow)
                 duration = 0
             else:
                 duration += 1
@@ -215,21 +215,8 @@ if __name__ == '__main__':
             for i in range(TRIALS):
 
                 clock = pygame.time.Clock()
-                intersection = pygame.sprite.Group()
                 cars = pygame.sprite.Group()
-                middle = Middle(LANE_WIDTH * 2, LANE_WIDTH * 2, CENTER, screen)
-                intersection.add(middle)
-                lanes = []
-                lanes.append(Lane(LANE_WIDTH, VERT_LANE_LENGTH, 'down', ((DISPLAY_WIDTH - LANE_WIDTH) // 2, (DISPLAY_HEIGHT - VERT_LANE_LENGTH) // 2 - LANE_WIDTH), screen))
-                lanes.append(Lane(LANE_WIDTH, VERT_LANE_LENGTH, 'up', ((DISPLAY_WIDTH + LANE_WIDTH) // 2, (DISPLAY_HEIGHT - VERT_LANE_LENGTH) // 2 - LANE_WIDTH), screen))
-                lanes.append(Lane(LANE_WIDTH, HORZ_LANE_LENGTH, 'left', ((DISPLAY_WIDTH + HORZ_LANE_LENGTH) // 2 + LANE_WIDTH, (DISPLAY_HEIGHT - LANE_WIDTH) // 2), screen))
-                lanes.append(Lane(LANE_WIDTH, HORZ_LANE_LENGTH, 'right', ((DISPLAY_WIDTH + HORZ_LANE_LENGTH) // 2 + LANE_WIDTH, (DISPLAY_HEIGHT + LANE_WIDTH) // 2), screen))
-                lanes.append(Lane(LANE_WIDTH, VERT_LANE_LENGTH, 'up', ((DISPLAY_WIDTH + LANE_WIDTH) // 2, (DISPLAY_HEIGHT + VERT_LANE_LENGTH) // 2 + LANE_WIDTH), screen))
-                lanes.append(Lane(LANE_WIDTH, VERT_LANE_LENGTH, 'down', ((DISPLAY_WIDTH - LANE_WIDTH) // 2, (DISPLAY_HEIGHT + VERT_LANE_LENGTH) // 2 + LANE_WIDTH), screen))
-                lanes.append(Lane(LANE_WIDTH, HORZ_LANE_LENGTH, 'right', ((DISPLAY_WIDTH // 2 - LANE_WIDTH) // 2, (DISPLAY_HEIGHT + LANE_WIDTH) // 2), screen))
-                lanes.append(Lane(LANE_WIDTH, HORZ_LANE_LENGTH, 'left', ((DISPLAY_WIDTH // 2 - LANE_WIDTH) // 2, (DISPLAY_HEIGHT - LANE_WIDTH) // 2), screen))
-                intersection.add(*lanes)
-                
+                intersection = Intersection(DISPLAY_WIDTH, DISPLAY_HEIGHT, screen)
                 main(control, SIM_LENGTH, frequency, 40, 150)
 
                 print(f'\nWait Time: {total_wait - last_wait}')
