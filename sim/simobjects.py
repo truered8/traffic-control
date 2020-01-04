@@ -109,7 +109,7 @@ class Car(pygame.sprite.Sprite):
 				self.angle = 0
 				self.rect.x += self.speed
 
-			 #check if car has left screen
+			# Check if the car has left the screen
 			if not self.screen.get_rect().colliderect(self.rect):
 				self.kill()
 				del self	
