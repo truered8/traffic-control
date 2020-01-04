@@ -17,7 +17,7 @@ BLUE = (0, 0, 255)
 img_folder = os.path.join(os.getcwd(), 'sim')
 
 def rot_center(image, rect, angle):
-	"""rotate an image while keeping its center"""
+	""" Rotate an image while keeping its center """
 	rot_image = pygame.transform.rotate(image, angle)
 	rot_rect = rot_image.get_rect(center=rect.center)
 	return rot_image, rot_rect
@@ -72,8 +72,6 @@ class Car(pygame.sprite.Sprite):
 			else:
 				self.front = self.rect.midright
 				self.back = self.rect.midleft
-			
-
 
 		def update(self, road):
 			self.position = []
@@ -115,11 +113,7 @@ class Car(pygame.sprite.Sprite):
 				self.kill()
 				del self
 				
-
-						
-			
-
-	
+    
 class Middle(pygame.sprite.Sprite):
 	''' Between the roads '''
 	def __init__(self, width, height, center, screen):
@@ -150,10 +144,6 @@ class Middle(pygame.sprite.Sprite):
 			if self.rect.contains(c):
 				self.incars.append(c)
 		
-
-
-
-
 
 class Lane(pygame.sprite.Sprite):
 	''' A single lane '''
@@ -191,6 +181,7 @@ class Lane(pygame.sprite.Sprite):
 			if self in c.position:
 				self.cars.append(c)
 
+
 class Intersection:
 	''' A 4-way intersection '''
 	def __init__(self, width, height, screen):
@@ -198,7 +189,7 @@ class Intersection:
 		LANE_WIDTH = int(width * 0.1)
 		VERT_LANE_LENGTH = height // 2 - LANE_WIDTH
 		HORZ_LANE_LENGTH = (width // 2 - LANE_WIDTH)
-		CENTER = (height // 2, height // 2)
+		CENTER = (width // 2, height // 2)
 
 		self.middle = Middle(LANE_WIDTH * 2, LANE_WIDTH * 2, CENTER, screen)
 		self.lanes = []
@@ -212,6 +203,6 @@ class Intersection:
 		self.lanes.append(Lane(LANE_WIDTH, HORZ_LANE_LENGTH, 'left', ((width // 2 - LANE_WIDTH) // 2, (height - LANE_WIDTH) // 2), screen))
 		
 		self.sprites = pygame.sprite.Group()
-		self.sprites.add(self.middle)
 		self.sprites.add(self.lanes)
+		self.sprites.add(self.middle)
 
