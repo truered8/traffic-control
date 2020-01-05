@@ -6,8 +6,8 @@ from sim.simobjects import *
 from p_attr import print_attributes as pa
 
 def main(control, sim_length, frequency, dmin, dmax):
-	global screen, clock, reverse, intersection, cars, intersection, total_wait, count, \
-	LANE_WIDTH, SPEED, SCREEN_SIZE
+	global screen, clock, reverse, intersections, cars, intersection, total_wait, count, \
+	SPEED, DISPLAY_WIDTH, DISPLAY_HEIGHT
 
 	def _text_objects(text, font):
 		textSurface = font.render(text, True, BLUE)
@@ -61,10 +61,13 @@ def main(control, sim_length, frequency, dmin, dmax):
 				'left': 3
 			}
 		} [lane] [turn]
+  
+	CAR_WIDTH  = int(DISPLAY_WIDTH * 0.04)
+	CAR_LENGTH = int(DISPLAY_WIDTH * 0.02)
 
 	i = random.choice(range(1))
-	l = intersection.lanes[i]
-	car = Car(l.start, l.direction, SPEED, random.choice(['straight','right','left']), screen)
+	l = intersections[2].lanes[i]
+	car = Car(CAR_WIDTH, CAR_LENGTH, l.start, l.direction, SPEED, random.choice(['straight','right','left']), screen)
 	car.start = i
 	cars.add(car)
 	#total_wait = 0
@@ -86,41 +89,41 @@ def main(control, sim_length, frequency, dmin, dmax):
 
 		if count % int(200 / SPEED) == 0:
 			i = random.choice(range(0, 7, 2))
-			l = intersection.lanes[i]
+			l = intersections[0].lanes[i]
 			g = random.choice(['straight', 'left', 'right'])
-			c = Car(l.start, l.direction, SPEED, g, screen)
+			c = Car(CAR_WIDTH, CAR_LENGTH, l.start, l.direction, SPEED, g, screen)
 			c.start = i
 			cars.add(c)
 		
 		for c in cars.sprites():
 			
 			c.speed = SPEED
-			
-			if c.rect.colliderect(intersection.middle.rect):
-				if not intersection.middle.rect.contains(c.rect):
-					if intersection.middle.flow != c.orientation and c.rect.colliderect(intersection.lanes[c.start]):
-						c.speed = 0
-					if reverse(c.orientation) in [d.orientation for d in intersection.middle.incars] and c.rect.colliderect(intersection.lanes[c.start]):
-						c.speed = 0
-				else:
-					if c.goal != 'straight':
-						t = intersection.middle.turns[get_turn(c.start, c.goal)]
-						if approx(c.rect.center, t) and not c.turned:
-							c.direction = rotate(c.direction, c.goal)
-							c.turned = True
+			for intersection in intersections:
+				if c.rect.colliderect(intersection.middle.rect):
+					if not intersection.middle.rect.contains(c.rect):
+						if intersection.middle.flow != c.orientation and c.rect.colliderect(intersection.lanes[c.start]):
+							c.speed = 0
+						if reverse(c.orientation) in [d.orientation for d in intersection.middle.incars] and c.rect.colliderect(intersection.lanes[c.start]):
+							c.speed = 0
+					else:
+						if c.goal != 'straight':
+							t = intersection.middle.turns[get_turn(c.start, c.goal)]
+							if approx(c.rect.center, t) and not c.turned:
+								c.direction = rotate(c.direction, c.goal)
+								c.turned = True
 
 			if c.speed == 0:
 				total_wait += 1
 
-		control(frequency, dmin, dmax)
+		for intersection in intersections: control(intersection, frequency, dmin, dmax)
 
 
-		intersection.sprites.update(cars.sprites())
+		for intersection in intersections: intersection.sprites.update(cars.sprites())
 		cars.update(intersection.sprites.sprites())
 		
 		screen.fill(YELLOW)
 
-		intersection.sprites.draw(screen)
+		for intersection in intersections: intersection.sprites.draw(screen)
 		cars.draw(screen)
 
 		pygame.display.update()
@@ -147,19 +150,19 @@ def get_screen_metrics():
 
 if __name__ == '__main__':
 
-	def timed(frequency, *args):
+	def timed(intersectionfrequency, *args):
 		''' Simple interval-based traffic control '''
 		if count % frequency == 0:
 			intersection.middle.flow = reverse(intersection.middle.flow)
 
-	def custom(frequency, *args):
+	def custom(intersection, frequency, *args):
 		''' Control in which the side with more cars gets the green light '''
 		hlanes = [intersection.lanes[2], intersection.lanes[6]]
 		vlanes = [intersection.lanes[0], intersection.lanes[4]]
 		if count % frequency == 0:
 			intersection.middle.flow = 'horizontal' if sum([len(l.cars) for l in hlanes]) > sum([len(l.cars) for l in vlanes]) else 'vertical'
 		
-	def actuated(frequency, dmin, dmax):
+	def actuated(intersection, frequency, dmin, dmax):
 		''' Semi-actuated traffic control '''
 		global duration
 		def is_empty(lanes):
@@ -197,12 +200,12 @@ if __name__ == '__main__':
 
 	CENTER = (DISPLAY_WIDTH // 2, DISPLAY_HEIGHT // 2)
 
-	SPEED = 8
+	SPEED = 1
 	TRIALS = 1
 	SIM_LENGTH = 500
 
 	controls = [custom]
-	frequencies = [50]
+	frequencies = [100]
 
 
 	for control in controls:
@@ -220,7 +223,11 @@ if __name__ == '__main__':
 
 				clock = pygame.time.Clock()
 				cars = pygame.sprite.Group()
-				intersection = Intersection(DISPLAY_WIDTH, DISPLAY_HEIGHT, screen)
+				intersections = []
+				intersections.append(Intersection(DISPLAY_WIDTH // 2, DISPLAY_HEIGHT // 2, 0, 0, screen))
+				intersections.append(Intersection(DISPLAY_WIDTH // 2, DISPLAY_HEIGHT // 2, DISPLAY_WIDTH // 2, 0, screen))
+				intersections.append(Intersection(DISPLAY_WIDTH // 2, DISPLAY_HEIGHT // 2, 0, DISPLAY_HEIGHT // 2, screen))
+				intersections.append(Intersection(DISPLAY_WIDTH // 2, DISPLAY_HEIGHT // 2, DISPLAY_WIDTH // 2, DISPLAY_HEIGHT // 2, screen))
 				main(control, SIM_LENGTH, frequency, 40, 150)
 
 				print(f'\nWait Time: {total_wait - last_wait}')

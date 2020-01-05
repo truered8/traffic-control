@@ -39,11 +39,12 @@ class Car(pygame.sprite.Sprite):
 						return True
 			return False
 
-		def __init__(self, center, direction, speed, goal, screen):
+		def __init__(self, width, length, center, direction, speed, goal, screen):
 			pygame.sprite.Sprite.__init__(self)
 			self.direction = direction
 			self.screen = screen
 			self.image = pygame.image.load(os.path.join(img_folder, r'redcar.png')).convert()
+			self.image = pygame.transform.scale(self.image, (width, length))
 			self.image.set_colorkey(WHITE)
 			self.rect = self.image.get_rect()
 			self.rect.center = center
@@ -116,12 +117,12 @@ class Car(pygame.sprite.Sprite):
     
 class Middle(pygame.sprite.Sprite):
 	''' Between the roads '''
-	def __init__(self, width, height, center, screen):
+	def __init__(self, width, length, center, screen):
 		pygame.sprite.Sprite.__init__(self)
 		self.screen = screen
 		w, h = screen.get_size()
 		self.image = pygame.image.load(os.path.join(img_folder,'Middle.png'))
-		self.image = pygame.transform.scale(self.image, (width, height))
+		self.image = pygame.transform.scale(self.image, (width, length))
 		self.image.set_colorkey(WHITE)
 		self.rect = self.image.get_rect()
 		self.rect.center = center
@@ -129,10 +130,10 @@ class Middle(pygame.sprite.Sprite):
 		self.cars = []
 		self.incars = []
 		self.turns = [
-			[int(self.rect.x + width * 0.25), int(self.rect.y + height * 0.25)],
-			[int(self.rect.x + width * 0.75), int(self.rect.y + height * 0.25)],
-			[int(self.rect.x + width * 0.25), int(self.rect.y + height * 0.75)],
-			[int(self.rect.x + width * 0.75), int(self.rect.y + height * 0.75)]
+			[int(self.rect.x + width * 0.25), int(self.rect.y + length * 0.25)],
+			[int(self.rect.x + width * 0.75), int(self.rect.y + length * 0.25)],
+			[int(self.rect.x + width * 0.25), int(self.rect.y + length * 0.75)],
+			[int(self.rect.x + width * 0.75), int(self.rect.y + length * 0.75)]
 		]
 	
 	def update(self, cars):
@@ -147,12 +148,12 @@ class Middle(pygame.sprite.Sprite):
 
 class Lane(pygame.sprite.Sprite):
 	''' A single lane '''
-	def __init__(self, width, height, direction, center, screen):
+	def __init__(self, width, length, direction, center, screen):
 		pygame.sprite.Sprite.__init__(self)
 		self.screen = screen
 		w, h = screen.get_size()
 		self.image = pygame.image.load(os.path.join(img_folder,'Lane.png'))
-		self.image = pygame.transform.scale(self.image, (width, height))
+		self.image = pygame.transform.scale(self.image, (width, length))
 		self.image.set_colorkey(WHITE)
 		self.rect = self.image.get_rect()
 		self.rect.center = center
@@ -184,25 +185,24 @@ class Lane(pygame.sprite.Sprite):
 
 class Intersection:
 	''' A 4-way intersection '''
-	def __init__(self, width, height, screen):
+	def __init__(self, width, height, x, y, screen):
 
 		LANE_WIDTH = int(width * 0.1)
 		VERT_LANE_LENGTH = height // 2 - LANE_WIDTH
 		HORZ_LANE_LENGTH = (width // 2 - LANE_WIDTH)
-		CENTER = (width // 2, height // 2)
+		CENTER = (width // 2 + x, height // 2 + y)
 
 		self.middle = Middle(LANE_WIDTH * 2, LANE_WIDTH * 2, CENTER, screen)
 		self.lanes = []
-		self.lanes.append(Lane(LANE_WIDTH, VERT_LANE_LENGTH, 'down', ((width - LANE_WIDTH) // 2, (height - VERT_LANE_LENGTH) // 2 - LANE_WIDTH), screen))
-		self.lanes.append(Lane(LANE_WIDTH, VERT_LANE_LENGTH, 'up', ((width + LANE_WIDTH) // 2, (height - VERT_LANE_LENGTH) // 2 - LANE_WIDTH), screen))
-		self.lanes.append(Lane(LANE_WIDTH, HORZ_LANE_LENGTH, 'left', ((width + HORZ_LANE_LENGTH) // 2 + LANE_WIDTH, (height - LANE_WIDTH) // 2), screen))
-		self.lanes.append(Lane(LANE_WIDTH, HORZ_LANE_LENGTH, 'right', ((width + HORZ_LANE_LENGTH) // 2 + LANE_WIDTH, (height + LANE_WIDTH) // 2), screen))
-		self.lanes.append(Lane(LANE_WIDTH, VERT_LANE_LENGTH, 'up', ((width + LANE_WIDTH) // 2, (height + VERT_LANE_LENGTH) // 2 + LANE_WIDTH), screen))
-		self.lanes.append(Lane(LANE_WIDTH, VERT_LANE_LENGTH, 'down', ((width - LANE_WIDTH) // 2, (height + VERT_LANE_LENGTH) // 2 + LANE_WIDTH), screen))
-		self.lanes.append(Lane(LANE_WIDTH, HORZ_LANE_LENGTH, 'right', ((width // 2 - LANE_WIDTH) // 2, (height + LANE_WIDTH) // 2), screen))
-		self.lanes.append(Lane(LANE_WIDTH, HORZ_LANE_LENGTH, 'left', ((width // 2 - LANE_WIDTH) // 2, (height - LANE_WIDTH) // 2), screen))
+		self.lanes.append(Lane(LANE_WIDTH, VERT_LANE_LENGTH, 'down', ((width - LANE_WIDTH) // 2 + x, (height - VERT_LANE_LENGTH) // 2 - LANE_WIDTH + y), screen))
+		self.lanes.append(Lane(LANE_WIDTH, VERT_LANE_LENGTH, 'up', ((width + LANE_WIDTH) // 2 + x, (height - VERT_LANE_LENGTH) // 2 - LANE_WIDTH + y), screen))
+		self.lanes.append(Lane(LANE_WIDTH, HORZ_LANE_LENGTH, 'left', ((width + HORZ_LANE_LENGTH) // 2 + LANE_WIDTH + x, (height - LANE_WIDTH) // 2 + y), screen))
+		self.lanes.append(Lane(LANE_WIDTH, HORZ_LANE_LENGTH, 'right', ((width + HORZ_LANE_LENGTH) // 2 + LANE_WIDTH + x, (height + LANE_WIDTH) // 2 + y), screen))
+		self.lanes.append(Lane(LANE_WIDTH, VERT_LANE_LENGTH, 'up', ((width + LANE_WIDTH) // 2 + x, (height + VERT_LANE_LENGTH) // 2 + LANE_WIDTH + y), screen))
+		self.lanes.append(Lane(LANE_WIDTH, VERT_LANE_LENGTH, 'down', ((width - LANE_WIDTH) // 2 + x, (height + VERT_LANE_LENGTH) // 2 + LANE_WIDTH + y), screen))
+		self.lanes.append(Lane(LANE_WIDTH, HORZ_LANE_LENGTH, 'right', ((width // 2 - LANE_WIDTH) // 2 + x, (height + LANE_WIDTH) // 2 + y), screen))
+		self.lanes.append(Lane(LANE_WIDTH, HORZ_LANE_LENGTH, 'left', ((width // 2 - LANE_WIDTH) // 2 + x, (height - LANE_WIDTH) // 2 + y), screen))
 		
 		self.sprites = pygame.sprite.Group()
 		self.sprites.add(self.lanes)
 		self.sprites.add(self.middle)
-
