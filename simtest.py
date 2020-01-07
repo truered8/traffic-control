@@ -66,8 +66,8 @@ def main(control, sim_length, frequency, dmin, dmax):
 	CAR_LENGTH = int(DISPLAY_WIDTH * 0.02)
 
 	i = random.choice(range(1))
-	l = intersections[2].lanes[i]
-	car = Car(CAR_WIDTH, CAR_LENGTH, l.start, l.direction, SPEED, random.choice(['straight','right','left']), screen)
+	l = intersections[1].lanes[i]
+	car = Car(CAR_WIDTH, CAR_LENGTH, l.start, l.direction, SPEED, random.choice(['straight','right']), screen)
 	car.start = i
 	cars.add(car)
 	#total_wait = 0
@@ -88,11 +88,12 @@ def main(control, sim_length, frequency, dmin, dmax):
 					quit()
 
 		if count % int(200 / SPEED) == 0:
-			i = random.choice(range(0, 7, 2))
-			l = intersections[0].lanes[i]
-			g = random.choice(['straight', 'left', 'right'])
+			s = random.choice(range(0, 7, 2))
+			i = random.choice(intersections)
+			l = i.lanes[s]
+			g = random.choice(['straight', 'right'])
 			c = Car(CAR_WIDTH, CAR_LENGTH, l.start, l.direction, SPEED, g, screen)
-			c.start = i
+			c.start = s
 			cars.add(c)
 		
 		for c in cars.sprites():
@@ -139,6 +140,8 @@ def get_screen_metrics():
 	COMBINED_SCREEN_SIZE = user32.GetSystemMetrics(78), user32.GetSystemMetrics(79)
 	SECOND_SCREEN_SIZE = (COMBINED_SCREEN_SIZE[0] - SCREEN_SIZE[0], COMBINED_SCREEN_SIZE[1])
 	DISPLAY_MODE = "single" if COMBINED_SCREEN_SIZE == SCREEN_SIZE else "dual"
+	print(SCREEN_SIZE)
+	print(COMBINED_SCREEN_SIZE)
 	RATIO = 1.0
 	if DISPLAY_MODE == "dual":
 		DISPLAY_WIDTH, DISPLAY_HEIGHT = tuple([int(i // RATIO) for i in list(SECOND_SCREEN_SIZE)])
@@ -185,6 +188,7 @@ if __name__ == '__main__':
 	reverse = lambda flow: {'horizontal': 'vertical'}.get(flow, 'horizontal')
 
 	x, y, DISPLAY_WIDTH, DISPLAY_HEIGHT = get_screen_metrics()
+	print(DISPLAY_WIDTH, DISPLAY_HEIGHT)
 	os.environ['SDL_VIDEO_WINDOW_POS'] = "%d,%d" % (x,y)
 	
 	BLACK = (0, 0, 0)
@@ -200,9 +204,9 @@ if __name__ == '__main__':
 
 	CENTER = (DISPLAY_WIDTH // 2, DISPLAY_HEIGHT // 2)
 
-	SPEED = 1
+	SPEED = 2
 	TRIALS = 1
-	SIM_LENGTH = 500
+	SIM_LENGTH = 1500
 
 	controls = [custom]
 	frequencies = [100]
