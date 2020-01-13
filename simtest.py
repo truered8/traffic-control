@@ -172,7 +172,7 @@ if __name__ == '__main__':
 		vlanes = [lanes[0], lanes[4]]
 		if count % frequency == 0:
 			switch = is_empty(hlanes) if middle.flow == 'horizontal' else is_empty(vlanes)
-			if switch and duration > dmin and duration < dmax:
+			if (switch and duration > dmin and duration < dmax) or (duration > dmax):
 				middle.flow = reverse(middle.flow)
 				duration = 0
 		else:
@@ -201,7 +201,7 @@ if __name__ == '__main__':
 	SIM_LENGTH = 500
 
 	controls = [actuated, custom]
-	frequencies = [50]
+	frequencies = [500]
 
 	# Iterate through each combination of the chosen control methods and frequencies
 	for control in controls:
