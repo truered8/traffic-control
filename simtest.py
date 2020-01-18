@@ -2,6 +2,8 @@ import ctypes
 import os
 import random
 import pygame
+import subprocess
+import platform
 from sim.simobjects import *
 
 def main(control, sim_length, frequency, dmin, dmax):
@@ -130,19 +132,25 @@ def main(control, sim_length, frequency, dmin, dmax):
 
 ''' Get information on the screen the program is running on '''
 def get_screen_metrics():
-	user32 = ctypes.windll.user32
-	SCREEN_SIZE = user32.GetSystemMetrics(0), user32.GetSystemMetrics(1)
-	COMBINED_SCREEN_SIZE = user32.GetSystemMetrics(78), user32.GetSystemMetrics(79)
-	SECOND_SCREEN_SIZE = (COMBINED_SCREEN_SIZE[0] - SCREEN_SIZE[0], COMBINED_SCREEN_SIZE[1])
-	DISPLAY_MODE = "single" if COMBINED_SCREEN_SIZE == SCREEN_SIZE else "dual"
-	RATIO = 1.0
-	if DISPLAY_MODE == "dual":
-		DISPLAY_WIDTH, DISPLAY_HEIGHT = tuple([int(i // RATIO) for i in list(SECOND_SCREEN_SIZE)])
-		x, y = ((COMBINED_SCREEN_SIZE[0] + SCREEN_SIZE[0] - DISPLAY_WIDTH) // 2, (COMBINED_SCREEN_SIZE[1] - DISPLAY_HEIGHT) // 2)
-	else:
-		DISPLAY_WIDTH, DISPLAY_HEIGHT = tuple([int(i // RATIO) for i in list(SCREEN_SIZE)])
-		x, y = (SCREEN_SIZE[0] - DISPLAY_WIDTH) // 2, (SCREEN_SIZE[1] - DISPLAY_HEIGHT) // 2
-	return x, y, DISPLAY_WIDTH, DISPLAY_HEIGHT
+	if platform.system() == 'Windows':
+		user32 = ctypes.windll.user32
+		SCREEN_SIZE = user32.GetSystemMetrics(0), user32.GetSystemMetrics(1)
+		COMBINED_SCREEN_SIZE = user32.GetSystemMetrics(78), user32.GetSystemMetrics(79)
+		SECOND_SCREEN_SIZE = (COMBINED_SCREEN_SIZE[0] - SCREEN_SIZE[0], COMBINED_SCREEN_SIZE[1])
+		DISPLAY_MODE = "single" if COMBINED_SCREEN_SIZE == SCREEN_SIZE else "dual"
+		RATIO = 1.0
+		if DISPLAY_MODE == "dual":
+			DISPLAY_WIDTH, DISPLAY_HEIGHT = tuple([int(i // RATIO) for i in list(SECOND_SCREEN_SIZE)])
+			x, y = ((COMBINED_SCREEN_SIZE[0] + SCREEN_SIZE[0] - DISPLAY_WIDTH) // 2, (COMBINED_SCREEN_SIZE[1] - DISPLAY_HEIGHT) // 2)
+		else:
+			DISPLAY_WIDTH, DISPLAY_HEIGHT = tuple([int(i // RATIO) for i in list(SCREEN_SIZE)])
+			x, y = (SCREEN_SIZE[0] - DISPLAY_WIDTH) // 2, (SCREEN_SIZE[1] - DISPLAY_HEIGHT) // 2
+		return x, y, DISPLAY_WIDTH, DISPLAY_HEIGHT
+	elif platform.system() == 'Linux':
+	    output = subprocess.Popen('xrandr | grep "\*" | cut -d" " -f4',shell=True, stdout=subprocess.PIPE).communicate()[0]
+	    resolution = [int(i) for i in output.split()[0].split(b'x')]
+	    return resolution[0] // 2, 0, resolution[0], resolution[1]
+	return 683, 0, 1366, 768
 
 if __name__ == '__main__':
 
@@ -196,12 +204,12 @@ if __name__ == '__main__':
 
 	CENTER = (DISPLAY_WIDTH // 2, DISPLAY_HEIGHT // 2)
 
-	SPEED = 8
+	SPEED = 4
 	TRIALS = 1
 	SIM_LENGTH = 500
 
 	controls = [actuated, custom]
-	frequencies = [500]
+	frequencies = [100]
 
 	# Iterate through each combination of the chosen control methods and frequencies
 	for control in controls:
