@@ -2,6 +2,8 @@ import ctypes
 import os
 import random
 import pygame
+import subprocess
+import platform
 from sim.simobjects import *
 from p_attr import print_attributes as pa
 
@@ -20,8 +22,8 @@ def main(control, sim_length, frequency, dmin, dmax):
 		screen.blit(TextSurf, TextRect)
 
 	def approx(p1, p2):
-		if abs(p1[0] - p2[0]) < SPEED // 2:
-			if abs(p1[1] - p2[1]) < SPEED // 2:
+		if abs(p1[0] - p2[0]) < 5:
+			if abs(p1[1] - p2[1]) < 5:
 				return True
 		return False
 
@@ -61,13 +63,21 @@ def main(control, sim_length, frequency, dmin, dmax):
 				'left': 3
 			}
 		} [lane] [turn]
+
+	def get_lane(i):
+		return {
+			intersections[0]: random.choice([0, 6]),
+			intersections[1]: random.choice([0, 2]),
+			intersections[2]: random.choice([4, 6]),
+			intersections[3]: random.choice([2, 4])
+		} [i]
   
 	CAR_WIDTH  = int(DISPLAY_WIDTH * 0.04)
 	CAR_LENGTH = int(DISPLAY_WIDTH * 0.02)
 
-	i = random.choice(range(1))
+	i = 0
 	l = intersections[1].lanes[i]
-	car = Car(CAR_WIDTH, CAR_LENGTH, l.start, l.direction, SPEED, random.choice(['straight','right']), screen)
+	car = Car(CAR_WIDTH, CAR_LENGTH, l.start, l.direction, SPEED, 'right', screen)
 	car.start = i
 	cars.add(car)
 	#total_wait = 0
@@ -88,13 +98,20 @@ def main(control, sim_length, frequency, dmin, dmax):
 					quit()
 
 		if count % int(200 / SPEED) == 0:
-			s = random.choice(range(0, 7, 2))
 			i = random.choice(intersections)
+			s = get_lane(i)
 			l = i.lanes[s]
 			g = random.choice(['straight', 'right'])
 			c = Car(CAR_WIDTH, CAR_LENGTH, l.start, l.direction, SPEED, g, screen)
 			c.start = s
 			cars.add(c)
+
+		if count == 100:
+			i = 0
+			l = intersections[1].lanes[i]
+			car = Car(CAR_WIDTH, CAR_LENGTH, l.start, l.direction, SPEED, 'right', screen)
+			car.start = i
+			cars.add(car)
 		
 		for c in cars.sprites():
 			
@@ -118,7 +135,6 @@ def main(control, sim_length, frequency, dmin, dmax):
 
 		for intersection in intersections: control(intersection, frequency, dmin, dmax)
 
-
 		for intersection in intersections: intersection.sprites.update(cars.sprites())
 		cars.update(intersection.sprites.sprites())
 		
@@ -135,25 +151,30 @@ def main(control, sim_length, frequency, dmin, dmax):
 
 def get_screen_metrics():
 	''' Get information on the screen the program is running on '''
-	user32 = ctypes.windll.user32
-	SCREEN_SIZE = user32.GetSystemMetrics(0), user32.GetSystemMetrics(1)
-	COMBINED_SCREEN_SIZE = user32.GetSystemMetrics(78), user32.GetSystemMetrics(79)
-	SECOND_SCREEN_SIZE = (COMBINED_SCREEN_SIZE[0] - SCREEN_SIZE[0], COMBINED_SCREEN_SIZE[1])
-	DISPLAY_MODE = "single" if COMBINED_SCREEN_SIZE == SCREEN_SIZE else "dual"
-	print(SCREEN_SIZE)
-	print(COMBINED_SCREEN_SIZE)
-	RATIO = 1.0
-	if DISPLAY_MODE == "dual":
-		DISPLAY_WIDTH, DISPLAY_HEIGHT = tuple([int(i // RATIO) for i in list(SECOND_SCREEN_SIZE)])
-		x, y = ((COMBINED_SCREEN_SIZE[0] + SCREEN_SIZE[0] - DISPLAY_WIDTH) // 2, (COMBINED_SCREEN_SIZE[1] - DISPLAY_HEIGHT) // 2)
-	else:
-		DISPLAY_WIDTH, DISPLAY_HEIGHT = tuple([int(i // RATIO) for i in list(SCREEN_SIZE)])
-		x, y = (SCREEN_SIZE[0] - DISPLAY_WIDTH) // 2, (SCREEN_SIZE[1] - DISPLAY_HEIGHT) // 2
-	return x, y, DISPLAY_WIDTH, DISPLAY_HEIGHT
+	if platform.system() == 'Windows':
+		user32 = ctypes.windll.user32
+		SCREEN_SIZE = user32.GetSystemMetrics(0), user32.GetSystemMetrics(1)
+		COMBINED_SCREEN_SIZE = user32.GetSystemMetrics(78), user32.GetSystemMetrics(79)
+		SECOND_SCREEN_SIZE = (COMBINED_SCREEN_SIZE[0] - SCREEN_SIZE[0], COMBINED_SCREEN_SIZE[1])
+		DISPLAY_MODE = "single" if COMBINED_SCREEN_SIZE == SCREEN_SIZE else "dual"
+		RATIO = 1.0
+		if DISPLAY_MODE == "dual":
+			DISPLAY_WIDTH, DISPLAY_HEIGHT = tuple([int(i // RATIO) for i in list(SECOND_SCREEN_SIZE)])
+			x, y = ((COMBINED_SCREEN_SIZE[0] + SCREEN_SIZE[0] - DISPLAY_WIDTH) // 2, (COMBINED_SCREEN_SIZE[1] - DISPLAY_HEIGHT) // 2)
+		else:
+			DISPLAY_WIDTH, DISPLAY_HEIGHT = tuple([int(i // RATIO) for i in list(SCREEN_SIZE)])
+			x, y = (SCREEN_SIZE[0] - DISPLAY_WIDTH) // 2, (SCREEN_SIZE[1] - DISPLAY_HEIGHT) // 2
+		return x, y, DISPLAY_WIDTH, DISPLAY_HEIGHT
+	elif platform.system() == 'Linux':
+	    output = subprocess.Popen('xrandr | grep "\*" | cut -d" " -f4',shell=True, stdout=subprocess.PIPE).communicate()[0]
+	    resolution = [int(i) for i in output.split()[0].split(b'x')]
+	    return resolution[0] // 2, 0, resolution[0], resolution[1]
+	return 683, 0, 1366, 768
+
 
 if __name__ == '__main__':
 
-	def timed(intersectionfrequency, *args):
+	def timed(intersection, frequency, *args):
 		''' Simple interval-based traffic control '''
 		if count % frequency == 0:
 			intersection.middle.flow = reverse(intersection.middle.flow)
@@ -204,12 +225,12 @@ if __name__ == '__main__':
 
 	CENTER = (DISPLAY_WIDTH // 2, DISPLAY_HEIGHT // 2)
 
-	SPEED = 2
+	SPEED = 4
 	TRIALS = 1
 	SIM_LENGTH = 1500
 
-	controls = [custom]
-	frequencies = [100]
+	controls = [actuated]
+	frequencies = [50]
 
 
 	for control in controls:

@@ -26,16 +26,16 @@ class Car(pygame.sprite.Sprite):
 		def close(self, c):
 			if self.direction == c.direction:
 				if self.direction == 'right':
-					if abs(self.rect.midright[0] - c.rect.midleft[0]) < self.rect.h:
+					if abs(self.rect.midright[0] - c.rect.midleft[0]) < self.speed:
 						return True
 				elif self.direction == 'left':
-					if abs(self.rect.midleft[0] - c.rect.midright[0]) < self.rect.h:
+					if abs(self.rect.midleft[0] - c.rect.midright[0]) < self.speed:
 						return True
 				elif self.direction == 'up':
-					if abs(self.rect.midtop[1] - c.rect.midbottom[1]) < self.rect.h:
+					if abs(self.rect.midtop[1] - c.rect.midbottom[1]) < self.speed:
 						return True
 				else:
-					if abs(self.rect.midbottom[1] - c.rect.midtop[1]) < self.rect.h:
+					if abs(self.rect.midbottom[1] - c.rect.midtop[1]) < self.speed:
 						return True
 			return False
 
@@ -81,7 +81,7 @@ class Car(pygame.sprite.Sprite):
 					self.position.append(r)
 			
 			for c in self.groups()[0]:
-				if self.close(c) and self != c and Lane in [type(p) for p in self.position]:
+				if self.close(c) and self != c:# and Lane in [type(p) for p in self.position]:
 					self.speed = 0
 
 			if self.direction == 'left':
