@@ -1,5 +1,0 @@
-
-Time: 2018-10-21 10:36:53.827767
-Wait Time: 800
-Wait Time: 917
-Wait Time: 891
