@@ -4,9 +4,12 @@ import random
 import pygame
 import subprocess
 import platform
+import pickle
+import numpy as np
+from tqdm import tqdm
 from sim.simobjects import *
 
-def main(control, sim_length, frequency, dmin, dmax):
+def main(control, sim_length, frequency, dmin, dmax, render):
 	global screen, clock, reverse, lanes, intersection, cars, intersection, total_wait, count, \
 	LANE_WIDTH, SPEED, SCREEN_SIZE
 
@@ -113,18 +116,18 @@ def main(control, sim_length, frequency, dmin, dmax):
 			if c.speed == 0:
 				total_wait += 1
 
-		control(frequency, dmin, dmax)
+		control(frequency, dmin, dmax, total_wait)
 
 
 		intersection.update(cars.sprites())
 		cars.update(intersection.sprites())
 		
-		screen.fill(YELLOW)
+		if render: screen.fill(YELLOW)
 
 		intersection.draw(screen)
 		cars.draw(screen)
 		
-		pygame.display.update()
+		if render: pygame.display.update()
 
 		clock.tick(180)
 
@@ -147,9 +150,9 @@ def get_screen_metrics():
 			x, y = (SCREEN_SIZE[0] - DISPLAY_WIDTH) // 2, (SCREEN_SIZE[1] - DISPLAY_HEIGHT) // 2
 		return x, y, DISPLAY_WIDTH, DISPLAY_HEIGHT
 	elif platform.system() == 'Linux':
-	    output = subprocess.Popen('xrandr | grep "\*" | cut -d" " -f4',shell=True, stdout=subprocess.PIPE).communicate()[0]
-	    resolution = [int(i) for i in output.split()[0].split(b'x')]
-	    return resolution[0] // 2, 0, resolution[0], resolution[1]
+		output = subprocess.Popen('xrandr | grep "\*" | cut -d" " -f4',shell=True, stdout=subprocess.PIPE).communicate()[0]
+		resolution = [int(i) for i in output.split()[0].split(b'x')]
+		return resolution[0] // 2, 0, resolution[0], resolution[1]
 	return 683, 0, 1366, 768
 
 if __name__ == '__main__':
@@ -166,7 +169,7 @@ if __name__ == '__main__':
 		if count % frequency == 0:
 			middle.flow = 'horizontal' if sum([len(l.cars) for l in hlanes]) > sum([len(l.cars) for l in vlanes]) else 'vertical'
 		
-	def actuated(frequency, dmin, dmax):
+	def actuated(frequency, dmin, dmax, *args):
 		''' Actuated traffic control '''
 		global duration
 		def is_empty(lanes):
@@ -186,6 +189,44 @@ if __name__ == '__main__':
 		else:
 			duration += 1
 
+	def q_control(frequency, *args):
+		''' Traffic control using q learning '''
+		global action, old_state
+		if count % frequency != 0: return
+		def get_cars():
+			hcars = 0
+			vcars = 0
+			for l in hlanes:
+				hcars += len(l.cars)
+			for l in vlanes:
+				vcars += len(l.cars)
+			return (min(hcars, 15), min(vcars, 15))
+		def get_reward():
+			result = 0
+			for l in lanes:
+				for c in l.cars:
+					if c.speed == 0:
+						result += 1
+			return (1 / (result + 1e-4))
+		
+		hlanes = [lanes[2], lanes[6]]
+		vlanes = [lanes[0], lanes[4]]
+		
+		if count > 1:
+			current_q = table[old_state + (action,)]
+			new_state = get_cars()
+			max_future_q = np.max(table[new_state])
+			reward = get_reward()
+			new_q = (1 - LEARNING_RATE) * current_q + LEARNING_RATE * (reward + DISCOUNT * max_future_q)
+			table[old_state + (action,)] = new_q
+		old_state = get_cars()
+		if np.random.random() > epsilon:
+			action = np.argmax(table[old_state])
+		else:
+			action = np.random.randint(0, 2)
+		middle.flow = ACTIONS[action]
+
+
 	reverse = lambda flow: {'horizontal': 'vertical'}.get(flow, 'horizontal')
 
 	x, y, DISPLAY_WIDTH, DISPLAY_HEIGHT = get_screen_metrics()
@@ -204,26 +245,42 @@ if __name__ == '__main__':
 
 	CENTER = (DISPLAY_WIDTH // 2, DISPLAY_HEIGHT // 2)
 
-	SPEED = 4
+	SPEED = 16
 	TRIALS = 1
 	SIM_LENGTH = 500
 
-	controls = [actuated, custom]
-	frequencies = [100]
+	LEARNING_RATE = 0.1
+	DISCOUNT = 0.95
+	EPISODES = 1000
+	epsilon = 1
+	START_EPSILON_DECAYING = 1
+	END_EPSILON_DECAYING = EPISODES//2
+	epsilon_decay_value = epsilon/(END_EPSILON_DECAYING - START_EPSILON_DECAYING)
+
+	ACTIONS = ['horizontal', 'vertical']
+
+	RENDER = False
+
+	table = np.zeros((16, 16, 2))
+
+	NAME = 'table-2'
+
+	controls = [q_control]
+	frequencies = [30]
 
 	# Iterate through each combination of the chosen control methods and frequencies
 	for control in controls:
 		for frequency in frequencies:
+			for episode in tqdm(range(EPISODES)):
 
-			count = 0
-			total_wait = 0
-			last_wait = 0
-			duration = 0
-			pygame.init()
-			screen = pygame.display.set_mode((DISPLAY_WIDTH, DISPLAY_HEIGHT))
-			pygame.display.set_caption('Simulation')
-
-			for i in range(TRIALS):
+				#print(f'Episode {episode} of {EPISODES}.')
+				count = 0
+				total_wait = 0
+				start_wait = 0
+				duration = 0
+				pygame.init()
+				screen = pygame.display.set_mode((DISPLAY_WIDTH, DISPLAY_HEIGHT))
+				pygame.display.set_caption('Simulation')
 
 				clock = pygame.time.Clock()
 				intersection = pygame.sprite.Group()
@@ -241,13 +298,20 @@ if __name__ == '__main__':
 				lanes.append(Lane(LANE_WIDTH, HORZ_LANE_LENGTH, 'left', ((DISPLAY_WIDTH // 2 - LANE_WIDTH) // 2, (DISPLAY_HEIGHT - LANE_WIDTH) // 2), screen))
 				intersection.add(*lanes)
 				
-				main(control, SIM_LENGTH, frequency, 40, 150)
+				main(control, SIM_LENGTH, frequency, 40, 150, RENDER)
 
-				print(f'\nWait Time: {total_wait - last_wait}')
-				last_wait = total_wait
+				if episode == 0: start_wait = total_wait
+				
+				pygame.quit()
 
-			print(f'\nAverage frames waited: {total_wait // TRIALS}')
-			
-			pygame.quit()
+				if END_EPSILON_DECAYING >= episode >= START_EPSILON_DECAYING:
+					epsilon -= epsilon_decay_value
+
+
+			with open(f'logs/{NAME}.txt', 'a') as file:
+				file.write(f'\n[START] Average frames waited: {start_wait}')
+				file.write(f'\n[END] Average frames waited: {total_wait}')
+			with open(f'{NAME}.npy', 'wb') as table_file:
+				pickle.dump(table, table_file)
 
 	quit()
