@@ -228,7 +228,7 @@ if __name__ == '__main__':
 	CENTER = (DISPLAY_WIDTH // 2, DISPLAY_HEIGHT // 2)
 
 	SPEED = 16
-	TRIALS = 1
+	TRIALS = 5
 	SIM_LENGTH = 500
 
 	ACTIONS = ['horizontal', 'vertical']
@@ -239,8 +239,12 @@ if __name__ == '__main__':
 		table = pickle.load(table_file)
 
 
-	controls = [actuated, q_control]
+	controls = [actuated, custom, q_control]
 	frequencies = [30]
+
+	pygame.init()
+	screen = pygame.display.set_mode((DISPLAY_WIDTH, DISPLAY_HEIGHT))
+	pygame.display.set_caption('Simulation')
 
 	# Iterate through each combination of the chosen control methods and frequencies
 	for control in controls:
@@ -249,31 +253,29 @@ if __name__ == '__main__':
 			count = 0
 			total_wait = 0
 			duration = 0
-			pygame.init()
-			screen = pygame.display.set_mode((DISPLAY_WIDTH, DISPLAY_HEIGHT))
-			pygame.display.set_caption('Simulation')
 
-			clock = pygame.time.Clock()
-			intersection = pygame.sprite.Group()
-			cars = pygame.sprite.Group()
-			middle = Middle(LANE_WIDTH * 2, LANE_WIDTH * 2, CENTER, screen)
-			intersection.add(middle)
-			lanes = []
-			lanes.append(Lane(LANE_WIDTH, VERT_LANE_LENGTH, 'down', ((DISPLAY_WIDTH - LANE_WIDTH) // 2, (DISPLAY_HEIGHT - VERT_LANE_LENGTH) // 2 - LANE_WIDTH), screen))
-			lanes.append(Lane(LANE_WIDTH, VERT_LANE_LENGTH, 'up', ((DISPLAY_WIDTH + LANE_WIDTH) // 2, (DISPLAY_HEIGHT - VERT_LANE_LENGTH) // 2 - LANE_WIDTH), screen))
-			lanes.append(Lane(LANE_WIDTH, HORZ_LANE_LENGTH, 'left', ((DISPLAY_WIDTH + HORZ_LANE_LENGTH) // 2 + LANE_WIDTH, (DISPLAY_HEIGHT - LANE_WIDTH) // 2), screen))
-			lanes.append(Lane(LANE_WIDTH, HORZ_LANE_LENGTH, 'right', ((DISPLAY_WIDTH + HORZ_LANE_LENGTH) // 2 + LANE_WIDTH, (DISPLAY_HEIGHT + LANE_WIDTH) // 2), screen))
-			lanes.append(Lane(LANE_WIDTH, VERT_LANE_LENGTH, 'up', ((DISPLAY_WIDTH + LANE_WIDTH) // 2, (DISPLAY_HEIGHT + VERT_LANE_LENGTH) // 2 + LANE_WIDTH), screen))
-			lanes.append(Lane(LANE_WIDTH, VERT_LANE_LENGTH, 'down', ((DISPLAY_WIDTH - LANE_WIDTH) // 2, (DISPLAY_HEIGHT + VERT_LANE_LENGTH) // 2 + LANE_WIDTH), screen))
-			lanes.append(Lane(LANE_WIDTH, HORZ_LANE_LENGTH, 'right', ((DISPLAY_WIDTH // 2 - LANE_WIDTH) // 2, (DISPLAY_HEIGHT + LANE_WIDTH) // 2), screen))
-			lanes.append(Lane(LANE_WIDTH, HORZ_LANE_LENGTH, 'left', ((DISPLAY_WIDTH // 2 - LANE_WIDTH) // 2, (DISPLAY_HEIGHT - LANE_WIDTH) // 2), screen))
-			intersection.add(*lanes)
+			for i in range(TRIALS):
+
+				clock = pygame.time.Clock()
+				intersection = pygame.sprite.Group()
+				cars = pygame.sprite.Group()
+				middle = Middle(LANE_WIDTH * 2, LANE_WIDTH * 2, CENTER, screen)
+				intersection.add(middle)
+				lanes = []
+				lanes.append(Lane(LANE_WIDTH, VERT_LANE_LENGTH, 'down', ((DISPLAY_WIDTH - LANE_WIDTH) // 2, (DISPLAY_HEIGHT - VERT_LANE_LENGTH) // 2 - LANE_WIDTH), screen))
+				lanes.append(Lane(LANE_WIDTH, VERT_LANE_LENGTH, 'up', ((DISPLAY_WIDTH + LANE_WIDTH) // 2, (DISPLAY_HEIGHT - VERT_LANE_LENGTH) // 2 - LANE_WIDTH), screen))
+				lanes.append(Lane(LANE_WIDTH, HORZ_LANE_LENGTH, 'left', ((DISPLAY_WIDTH + HORZ_LANE_LENGTH) // 2 + LANE_WIDTH, (DISPLAY_HEIGHT - LANE_WIDTH) // 2), screen))
+				lanes.append(Lane(LANE_WIDTH, HORZ_LANE_LENGTH, 'right', ((DISPLAY_WIDTH + HORZ_LANE_LENGTH) // 2 + LANE_WIDTH, (DISPLAY_HEIGHT + LANE_WIDTH) // 2), screen))
+				lanes.append(Lane(LANE_WIDTH, VERT_LANE_LENGTH, 'up', ((DISPLAY_WIDTH + LANE_WIDTH) // 2, (DISPLAY_HEIGHT + VERT_LANE_LENGTH) // 2 + LANE_WIDTH), screen))
+				lanes.append(Lane(LANE_WIDTH, VERT_LANE_LENGTH, 'down', ((DISPLAY_WIDTH - LANE_WIDTH) // 2, (DISPLAY_HEIGHT + VERT_LANE_LENGTH) // 2 + LANE_WIDTH), screen))
+				lanes.append(Lane(LANE_WIDTH, HORZ_LANE_LENGTH, 'right', ((DISPLAY_WIDTH // 2 - LANE_WIDTH) // 2, (DISPLAY_HEIGHT + LANE_WIDTH) // 2), screen))
+				lanes.append(Lane(LANE_WIDTH, HORZ_LANE_LENGTH, 'left', ((DISPLAY_WIDTH // 2 - LANE_WIDTH) // 2, (DISPLAY_HEIGHT - LANE_WIDTH) // 2), screen))
+				intersection.add(*lanes)
 			
-			main(control, SIM_LENGTH, frequency, 40, 150, RENDER)
+				main(control, SIM_LENGTH, frequency, 40, 150, RENDER)
 
-			print(f'\nWait Time: {total_wait}')
-			pygame.quit()
+			print(f'\nAverage frames waited for {control.__name__}: {total_wait // TRIALS}')
+			
 
-
-
+	pygame.quit()
 	quit()

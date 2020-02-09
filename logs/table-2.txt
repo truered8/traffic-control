@@ -1,0 +1,3 @@
+
+[START] Average frames waited: 707
+[END] Average frames waited: 764
