@@ -216,6 +216,7 @@ if __name__ == '__main__':
 		
 		hlanes = [lanes[2], lanes[6]]
 		vlanes = [lanes[0], lanes[4]]
+<<<<<<< HEAD
 		get_state = get_state_1
 		
 		if count > 1:
@@ -228,6 +229,20 @@ if __name__ == '__main__':
 		old_state = get_state()
 		if np.random.random() > epsilon:
 			action = np.argmax(table_1[old_state])
+=======
+		get_state = get_state_2
+		
+		if count > 1:
+			current_q = table_2[old_state + (action,)]
+			new_state = get_state()
+			max_future_q = np.max(table_2[new_state])
+			reward = get_reward()
+			new_q = (1 - LEARNING_RATE) * current_q + LEARNING_RATE * (reward + DISCOUNT * max_future_q)
+			table_2[old_state + (action,)] = new_q
+		old_state = get_state()
+		if np.random.random() > epsilon:
+			action = np.argmax(table_2[old_state])
+>>>>>>> d7063b3b83a5f01b86467f8c0c906e4a4acd70b5
 		else:
 			action = np.random.randint(0, 2)
 		middle.flow = ACTIONS[action]
@@ -255,11 +270,17 @@ if __name__ == '__main__':
 	TRIALS = 1
 	SIM_LENGTH = 500
 
+<<<<<<< HEAD
 	LEARNING_RATE = 0.15
 	DISCOUNT = 0.95
 	EPISODES = 1000
 	GOAL = 575
 	SAVE = 1
+=======
+	LEARNING_RATE = 0.1
+	DISCOUNT = 0.95
+	EPISODES = 1000
+>>>>>>> d7063b3b83a5f01b86467f8c0c906e4a4acd70b5
 	epsilon = 1
 	START_EPSILON_DECAYING = 1
 	END_EPSILON_DECAYING = EPISODES//2
@@ -270,18 +291,31 @@ if __name__ == '__main__':
 	RENDER = False
 
 	table_1 = np.zeros((16, 16, 2))
+<<<<<<< HEAD
 
 	NAME = 'table-9'
 
 	frequency = 30
 	episode = 0
 	total_wait = 0
+=======
+	table_2 = np.zeros((8, 8, 8, 8, 2))
+
+	NAME = 'table-2'
+
+	frequency = 30
+	start_wait = 0
+>>>>>>> d7063b3b83a5f01b86467f8c0c906e4a4acd70b5
 
 	pygame.init()
 	screen = pygame.display.set_mode((DISPLAY_WIDTH, DISPLAY_HEIGHT))
 	pygame.display.set_caption('Simulation')
 
+<<<<<<< HEAD
 	while True: #for episode in tqdm(range(EPISODES)):
+=======
+	for episode in tqdm(range(EPISODES)):
+>>>>>>> d7063b3b83a5f01b86467f8c0c906e4a4acd70b5
 
 		count = 0
 		total_wait = 0
@@ -305,6 +339,7 @@ if __name__ == '__main__':
 		
 		main(q_control, SIM_LENGTH, frequency, 40, 150, RENDER)
 
+<<<<<<< HEAD
 		if episode % SAVE == 0:
 			with open(f'tables/{NAME}.npy', 'wb') as table_file:
 				pickle.dump(table_1, table_file)
@@ -314,14 +349,26 @@ if __name__ == '__main__':
 
 		if total_wait <= GOAL and episode >= EPISODES:
 			break
+=======
+		if episode == 0: start_wait = total_wait
+>>>>>>> d7063b3b83a5f01b86467f8c0c906e4a4acd70b5
 
 		if END_EPSILON_DECAYING >= episode >= START_EPSILON_DECAYING:
 			epsilon -= epsilon_decay_value
 
+<<<<<<< HEAD
 		episode += 1
 
 	with open(f'tables/{NAME}.npy', 'wb') as table_file:
 				pickle.dump(table_1, table_file)
 
+=======
+
+	with open(f'logs/{NAME}.txt', 'a') as file:
+		file.write(f'\n[START] Average frames waited: {start_wait}')
+		file.write(f'\n[END] Average frames waited: {total_wait}')
+	with open(f'tables/{NAME}.npy', 'wb') as table_file:
+		pickle.dump(table_2, table_file)
+>>>>>>> d7063b3b83a5f01b86467f8c0c906e4a4acd70b5
 	pygame.quit()
 	quit()

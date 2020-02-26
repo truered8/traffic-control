@@ -199,7 +199,11 @@ if __name__ == '__main__':
 				hcars += len(l.cars)
 			for l in vlanes:
 				vcars += len(l.cars)
+<<<<<<< HEAD
 			return (min(hcars, 7), min(vcars, 7))
+=======
+			return (hcars, vcars)
+>>>>>>> d7063b3b83a5f01b86467f8c0c906e4a4acd70b5
 
 		hlanes = [lanes[2], lanes[6]]
 		vlanes = [lanes[0], lanes[4]]
@@ -228,7 +232,11 @@ if __name__ == '__main__':
 	CENTER = (DISPLAY_WIDTH // 2, DISPLAY_HEIGHT // 2)
 
 	SPEED = 16
+<<<<<<< HEAD
 	TRIALS = 20
+=======
+	TRIALS = 5
+>>>>>>> d7063b3b83a5f01b86467f8c0c906e4a4acd70b5
 	SIM_LENGTH = 500
 
 	ACTIONS = ['horizontal', 'vertical']
