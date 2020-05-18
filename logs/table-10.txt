@@ -1,0 +1,7 @@
+
+[0001] Average frames waited: 833
+[0002] Average frames waited: 659
+[0003] Average frames waited: 800
+[0004] Average frames waited: 699
+[0005] Average frames waited: 482
+[0006] Average frames waited: 584

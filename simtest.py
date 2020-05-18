@@ -1,24 +1,19 @@
 import ctypes
 import os
+import sys
 import random
 import pygame
 import subprocess
 import platform
+import pickle
+import numpy as np
+from argparse import ArgumentParser
+#from dqn import DQNAgent
 from sim.simobjects import *
 
-def main(control, sim_length, frequency, dmin, dmax):
-	global screen, clock, reverse, lanes, intersection, cars, intersection, total_wait, count, \
+def main(control, sim_length, frequency, dmin, dmax, render):
+	global screen, clock, reverse, lanes, intersection, cars, intersection, total_wait, count, trial_reward, \
 	LANE_WIDTH, SPEED, SCREEN_SIZE
-
-	def _text_objects(text, font):
-		textSurface = font.render(text, True, BLUE)
-		return textSurface, textSurface.get_rect()
-
-	def message_display(text, center):
-		largeText = pygame.font.Font('freesansbold.ttf',70)
-		TextSurf, TextRect = _text_objects(text, largeText)
-		TextRect.center = (center)
-		screen.blit(TextSurf, TextRect)
 
 	def approx(p1, p2):
 		if abs(p1[0] - p2[0]) < SPEED // 2:
@@ -63,6 +58,14 @@ def main(control, sim_length, frequency, dmin, dmax):
 			}
 		} [lane] [turn]
 
+	def get_reward():
+			result = 0
+			for l in lanes:
+				for c in l.cars:
+					if c.speed == 0:
+						result += 1
+			return (1 / (result + 1e-4))
+
 	i = 6
 	l = lanes[i]
 	car = Car(l.start, l.direction, SPEED, random.choice(['straight','right','left']), screen)
@@ -88,7 +91,7 @@ def main(control, sim_length, frequency, dmin, dmax):
 		if count % int(200 / SPEED) == 0:
 			i = random.choice(range(0, 7, 2))
 			l = lanes[i]
-			g = random.choice(['straight', 'left', 'right'])
+			g = random.choice(['straight', 'right'])
 			c = Car(l.start, l.direction, SPEED, g, screen)
 			c.start = i
 			cars.add(c)
@@ -113,8 +116,8 @@ def main(control, sim_length, frequency, dmin, dmax):
 			if c.speed == 0:
 				total_wait += 1
 
-		control(frequency, dmin, dmax)
-
+		control(frequency, dmin, dmax, total_wait)
+		trial_reward += get_reward()
 
 		intersection.update(cars.sprites())
 		cars.update(intersection.sprites())
@@ -124,7 +127,7 @@ def main(control, sim_length, frequency, dmin, dmax):
 		intersection.draw(screen)
 		cars.draw(screen)
 		
-		pygame.display.update()
+		if render: pygame.display.update()
 
 		clock.tick(180)
 
@@ -147,9 +150,9 @@ def get_screen_metrics():
 			x, y = (SCREEN_SIZE[0] - DISPLAY_WIDTH) // 2, (SCREEN_SIZE[1] - DISPLAY_HEIGHT) // 2
 		return x, y, DISPLAY_WIDTH, DISPLAY_HEIGHT
 	elif platform.system() == 'Linux':
-	    output = subprocess.Popen('xrandr | grep "\*" | cut -d" " -f4',shell=True, stdout=subprocess.PIPE).communicate()[0]
-	    resolution = [int(i) for i in output.split()[0].split(b'x')]
-	    return resolution[0] // 2, 0, resolution[0], resolution[1]
+		output = subprocess.Popen('xrandr | grep "\*" | cut -d" " -f4',shell=True, stdout=subprocess.PIPE).communicate()[0]
+		resolution = [int(i) for i in output.split()[0].split(b'x')]
+		return resolution[0] // 2, 0, resolution[0], resolution[1]
 	return 683, 0, 1366, 768
 
 if __name__ == '__main__':
@@ -166,7 +169,7 @@ if __name__ == '__main__':
 		if count % frequency == 0:
 			middle.flow = 'horizontal' if sum([len(l.cars) for l in hlanes]) > sum([len(l.cars) for l in vlanes]) else 'vertical'
 		
-	def actuated(frequency, dmin, dmax):
+	def actuated(frequency, dmin, dmax, *args):
 		''' Actuated traffic control '''
 		global duration
 		def is_empty(lanes):
@@ -186,9 +189,66 @@ if __name__ == '__main__':
 		else:
 			duration += 1
 
+	def q_control(frequency, *args):
+		''' Traffic control using pretrained q table '''
+		if count % frequency != 0: return
+		def get_cars():
+			hcars = 0
+			vcars = 0
+			for l in hlanes:
+				hcars += len(l.cars)
+			for l in vlanes:
+				vcars += len(l.cars)
+			return (min(hcars, 7), min(vcars, 7))
+			return (hcars, vcars)
+
+		hlanes = [lanes[2], lanes[6]]
+		vlanes = [lanes[0], lanes[4]]
+			
+		state = get_cars()
+		action = np.argmax(table[state])
+		middle.flow = ACTIONS[action]
+
+	def deep_q_control(frequency, *args):
+		''' Traffic control using deep q learning '''
+		global action, old_state, episode_reward
+		if count % frequency != 0: return
+		def get_stat():
+			hcars = 0
+			vcars = 0
+			for l in hlanes:
+				hcars += len(l.cars)
+			for l in vlanes:
+				vcars += len(l.cars)
+			return np.array([min(hcars, 15), min(vcars, 15)])
+
+		def get_state():
+			cars = [len(l.cars) for l in [*hlanes, *vlanes]]
+			return np.array([min(c, 8) for c in cars])
+		
+		hlanes = [lanes[2], lanes[6]]
+		vlanes = [lanes[0], lanes[4]]
+
+		action = np.argmax(agent.get_qs(get_state()))
+		middle.flow = ACTIONS[action]
+
+
+	ap = ArgumentParser()
+	ap.add_argument('-t', '--table', type=str, help='Path to the pretrained q table')
+	ap.add_argument('-m', '--model', type=str, help='Path to the pretrained neural network')
+	args = vars(ap.parse_args())
+
+	if args.get('table', None):
+		with open(args['table'], 'rb') as table_file:
+			table = pickle.load(table_file)
+
+	if args.get('model', None):
+		agent = DQNAgent('test')
+		agent.load(args['model'])
+
 	reverse = lambda flow: {'horizontal': 'vertical'}.get(flow, 'horizontal')
 
-	x, y, DISPLAY_WIDTH, DISPLAY_HEIGHT = get_screen_metrics()
+	x, y, DISPLAY_WIDTH, DISPLAY_HEIGHT = 640, 640, 1280, 1280#get_screen_metrics()
 	os.environ['SDL_VIDEO_WINDOW_POS'] = "%d,%d" % (x,y)
 	
 	BLACK = (0, 0, 0)
@@ -204,26 +264,37 @@ if __name__ == '__main__':
 
 	CENTER = (DISPLAY_WIDTH // 2, DISPLAY_HEIGHT // 2)
 
-	SPEED = 4
-	TRIALS = 1
-	SIM_LENGTH = 500
+	SPEED = 8
+	TRIALS = 2
+	SIM_LENGTH = 300
 
-	controls = [actuated, custom]
-	frequencies = [100]
+	ACTIONS = ['horizontal', 'vertical']
+	MAX_SIZE = 15
+
+	RENDER = True
+
+	controls = [timed, custom]
+	frequencies = [88]
+
+	pygame.init()
+	screen = pygame.display.set_mode((DISPLAY_WIDTH, DISPLAY_HEIGHT))
+	pygame.display.set_caption('Simulation')
+
+	
 
 	# Iterate through each combination of the chosen control methods and frequencies
 	for control in controls:
+		rewards = []
+		waits = []
 		for frequency in frequencies:
 
 			count = 0
-			total_wait = 0
-			last_wait = 0
 			duration = 0
-			pygame.init()
-			screen = pygame.display.set_mode((DISPLAY_WIDTH, DISPLAY_HEIGHT))
-			pygame.display.set_caption('Simulation')
 
 			for i in range(TRIALS):
+
+				trial_reward = 0
+				total_wait = 0
 
 				clock = pygame.time.Clock()
 				intersection = pygame.sprite.Group()
@@ -240,14 +311,18 @@ if __name__ == '__main__':
 				lanes.append(Lane(LANE_WIDTH, HORZ_LANE_LENGTH, 'right', ((DISPLAY_WIDTH // 2 - LANE_WIDTH) // 2, (DISPLAY_HEIGHT + LANE_WIDTH) // 2), screen))
 				lanes.append(Lane(LANE_WIDTH, HORZ_LANE_LENGTH, 'left', ((DISPLAY_WIDTH // 2 - LANE_WIDTH) // 2, (DISPLAY_HEIGHT - LANE_WIDTH) // 2), screen))
 				intersection.add(*lanes)
-				
-				main(control, SIM_LENGTH, frequency, 40, 150)
-
-				print(f'\nWait Time: {total_wait - last_wait}')
-				last_wait = total_wait
-
-			print(f'\nAverage frames waited: {total_wait // TRIALS}')
 			
-			pygame.quit()
+				main(control, SIM_LENGTH, frequency, 40, 150, RENDER)
+				rewards.append(trial_reward)
+				waits.append(total_wait)
 
+			print(f'Stats for {control.__name__}:')
+			print(f'Min: {min(rewards)}')
+			print(f'Avg: {sum(rewards)/TRIALS}')
+			print(f'Max: {max(rewards)}')
+			print(f'Wait: {sum(waits)/TRIALS}')
+
+			
+
+	pygame.quit()
 	quit()
