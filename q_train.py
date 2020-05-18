@@ -1,12 +1,12 @@
 import ctypes
 import os
-import sys
 import random
 import pygame
 import subprocess
 import platform
 import pickle
 import numpy as np
+from tqdm import tqdm
 from sim.simobjects import *
 
 def main(control, sim_length, frequency, dmin, dmax, render):
@@ -122,7 +122,7 @@ def main(control, sim_length, frequency, dmin, dmax, render):
 		intersection.update(cars.sprites())
 		cars.update(intersection.sprites())
 		
-		screen.fill(YELLOW)
+		if render: screen.fill(YELLOW)
 
 		intersection.draw(screen)
 		cars.draw(screen)
@@ -190,26 +190,61 @@ if __name__ == '__main__':
 			duration += 1
 
 	def q_control(frequency, *args):
-		''' Traffic control using pretrained q table '''
+		''' Traffic control using q learning '''
+		global action, old_state
 		if count % frequency != 0: return
-		def get_cars():
+		def get_state_1():
 			hcars = 0
 			vcars = 0
 			for l in hlanes:
 				hcars += len(l.cars)
 			for l in vlanes:
 				vcars += len(l.cars)
-<<<<<<< HEAD
-			return (min(hcars, 7), min(vcars, 7))
-=======
-			return (hcars, vcars)
->>>>>>> d7063b3b83a5f01b86467f8c0c906e4a4acd70b5
-
+			return (min(hcars, 15), min(vcars, 15))
+		def get_state_2():
+			state = [0, 0, 0, 0]
+			for i, l in enumerate([lanes[0], lanes[2], lanes[4], lanes[6]]):
+				state[i] += len(l.cars) if len(l.cars) < 7 else 7
+			return tuple(state)
+		def get_reward():
+			result = 0
+			for l in lanes:
+				for c in l.cars:
+					if c.speed == 0:
+						result += 1
+			return (1 / (result + 1e-4))
+		
 		hlanes = [lanes[2], lanes[6]]
 		vlanes = [lanes[0], lanes[4]]
-			
-		state = get_cars()
-		action = np.argmax(table[state])
+<<<<<<< HEAD
+		get_state = get_state_1
+		
+		if count > 1:
+			current_q = table_1[old_state + (action,)]
+			new_state = get_state()
+			max_future_q = np.max(table_1[new_state])
+			reward = get_reward()
+			new_q = (1 - LEARNING_RATE) * current_q + LEARNING_RATE * (reward + DISCOUNT * max_future_q)
+			table_1[old_state + (action,)] = new_q
+		old_state = get_state()
+		if np.random.random() > epsilon:
+			action = np.argmax(table_1[old_state])
+=======
+		get_state = get_state_2
+		
+		if count > 1:
+			current_q = table_2[old_state + (action,)]
+			new_state = get_state()
+			max_future_q = np.max(table_2[new_state])
+			reward = get_reward()
+			new_q = (1 - LEARNING_RATE) * current_q + LEARNING_RATE * (reward + DISCOUNT * max_future_q)
+			table_2[old_state + (action,)] = new_q
+		old_state = get_state()
+		if np.random.random() > epsilon:
+			action = np.argmax(table_2[old_state])
+>>>>>>> d7063b3b83a5f01b86467f8c0c906e4a4acd70b5
+		else:
+			action = np.random.randint(0, 2)
 		middle.flow = ACTIONS[action]
 
 
@@ -232,58 +267,108 @@ if __name__ == '__main__':
 	CENTER = (DISPLAY_WIDTH // 2, DISPLAY_HEIGHT // 2)
 
 	SPEED = 16
-<<<<<<< HEAD
-	TRIALS = 20
-=======
-	TRIALS = 5
->>>>>>> d7063b3b83a5f01b86467f8c0c906e4a4acd70b5
+	TRIALS = 1
 	SIM_LENGTH = 500
+
+<<<<<<< HEAD
+	LEARNING_RATE = 0.15
+	DISCOUNT = 0.95
+	EPISODES = 1000
+	GOAL = 575
+	SAVE = 1
+=======
+	LEARNING_RATE = 0.1
+	DISCOUNT = 0.95
+	EPISODES = 1000
+>>>>>>> d7063b3b83a5f01b86467f8c0c906e4a4acd70b5
+	epsilon = 1
+	START_EPSILON_DECAYING = 1
+	END_EPSILON_DECAYING = EPISODES//2
+	epsilon_decay_value = epsilon/(END_EPSILON_DECAYING - START_EPSILON_DECAYING)
 
 	ACTIONS = ['horizontal', 'vertical']
 
-	RENDER = True
+	RENDER = False
 
-	with open(sys.argv[1], 'rb') as table_file:
-		table = pickle.load(table_file)
+	table_1 = np.zeros((16, 16, 2))
+<<<<<<< HEAD
 
+	NAME = 'table-9'
 
-	controls = [actuated, custom, q_control]
-	frequencies = [30]
+	frequency = 30
+	episode = 0
+	total_wait = 0
+=======
+	table_2 = np.zeros((8, 8, 8, 8, 2))
+
+	NAME = 'table-2'
+
+	frequency = 30
+	start_wait = 0
+>>>>>>> d7063b3b83a5f01b86467f8c0c906e4a4acd70b5
 
 	pygame.init()
 	screen = pygame.display.set_mode((DISPLAY_WIDTH, DISPLAY_HEIGHT))
 	pygame.display.set_caption('Simulation')
 
-	# Iterate through each combination of the chosen control methods and frequencies
-	for control in controls:
-		for frequency in frequencies:
+<<<<<<< HEAD
+	while True: #for episode in tqdm(range(EPISODES)):
+=======
+	for episode in tqdm(range(EPISODES)):
+>>>>>>> d7063b3b83a5f01b86467f8c0c906e4a4acd70b5
 
-			count = 0
-			total_wait = 0
-			duration = 0
+		count = 0
+		total_wait = 0
+		duration = 0
 
-			for i in range(TRIALS):
+		clock = pygame.time.Clock()
+		intersection = pygame.sprite.Group()
+		cars = pygame.sprite.Group()
+		middle = Middle(LANE_WIDTH * 2, LANE_WIDTH * 2, CENTER, screen)
+		intersection.add(middle)
+		lanes = []
+		lanes.append(Lane(LANE_WIDTH, VERT_LANE_LENGTH, 'down', ((DISPLAY_WIDTH - LANE_WIDTH) // 2, (DISPLAY_HEIGHT - VERT_LANE_LENGTH) // 2 - LANE_WIDTH), screen))
+		lanes.append(Lane(LANE_WIDTH, VERT_LANE_LENGTH, 'up', ((DISPLAY_WIDTH + LANE_WIDTH) // 2, (DISPLAY_HEIGHT - VERT_LANE_LENGTH) // 2 - LANE_WIDTH), screen))
+		lanes.append(Lane(LANE_WIDTH, HORZ_LANE_LENGTH, 'left', ((DISPLAY_WIDTH + HORZ_LANE_LENGTH) // 2 + LANE_WIDTH, (DISPLAY_HEIGHT - LANE_WIDTH) // 2), screen))
+		lanes.append(Lane(LANE_WIDTH, HORZ_LANE_LENGTH, 'right', ((DISPLAY_WIDTH + HORZ_LANE_LENGTH) // 2 + LANE_WIDTH, (DISPLAY_HEIGHT + LANE_WIDTH) // 2), screen))
+		lanes.append(Lane(LANE_WIDTH, VERT_LANE_LENGTH, 'up', ((DISPLAY_WIDTH + LANE_WIDTH) // 2, (DISPLAY_HEIGHT + VERT_LANE_LENGTH) // 2 + LANE_WIDTH), screen))
+		lanes.append(Lane(LANE_WIDTH, VERT_LANE_LENGTH, 'down', ((DISPLAY_WIDTH - LANE_WIDTH) // 2, (DISPLAY_HEIGHT + VERT_LANE_LENGTH) // 2 + LANE_WIDTH), screen))
+		lanes.append(Lane(LANE_WIDTH, HORZ_LANE_LENGTH, 'right', ((DISPLAY_WIDTH // 2 - LANE_WIDTH) // 2, (DISPLAY_HEIGHT + LANE_WIDTH) // 2), screen))
+		lanes.append(Lane(LANE_WIDTH, HORZ_LANE_LENGTH, 'left', ((DISPLAY_WIDTH // 2 - LANE_WIDTH) // 2, (DISPLAY_HEIGHT - LANE_WIDTH) // 2), screen))
+		intersection.add(*lanes)
+		
+		main(q_control, SIM_LENGTH, frequency, 40, 150, RENDER)
 
-				clock = pygame.time.Clock()
-				intersection = pygame.sprite.Group()
-				cars = pygame.sprite.Group()
-				middle = Middle(LANE_WIDTH * 2, LANE_WIDTH * 2, CENTER, screen)
-				intersection.add(middle)
-				lanes = []
-				lanes.append(Lane(LANE_WIDTH, VERT_LANE_LENGTH, 'down', ((DISPLAY_WIDTH - LANE_WIDTH) // 2, (DISPLAY_HEIGHT - VERT_LANE_LENGTH) // 2 - LANE_WIDTH), screen))
-				lanes.append(Lane(LANE_WIDTH, VERT_LANE_LENGTH, 'up', ((DISPLAY_WIDTH + LANE_WIDTH) // 2, (DISPLAY_HEIGHT - VERT_LANE_LENGTH) // 2 - LANE_WIDTH), screen))
-				lanes.append(Lane(LANE_WIDTH, HORZ_LANE_LENGTH, 'left', ((DISPLAY_WIDTH + HORZ_LANE_LENGTH) // 2 + LANE_WIDTH, (DISPLAY_HEIGHT - LANE_WIDTH) // 2), screen))
-				lanes.append(Lane(LANE_WIDTH, HORZ_LANE_LENGTH, 'right', ((DISPLAY_WIDTH + HORZ_LANE_LENGTH) // 2 + LANE_WIDTH, (DISPLAY_HEIGHT + LANE_WIDTH) // 2), screen))
-				lanes.append(Lane(LANE_WIDTH, VERT_LANE_LENGTH, 'up', ((DISPLAY_WIDTH + LANE_WIDTH) // 2, (DISPLAY_HEIGHT + VERT_LANE_LENGTH) // 2 + LANE_WIDTH), screen))
-				lanes.append(Lane(LANE_WIDTH, VERT_LANE_LENGTH, 'down', ((DISPLAY_WIDTH - LANE_WIDTH) // 2, (DISPLAY_HEIGHT + VERT_LANE_LENGTH) // 2 + LANE_WIDTH), screen))
-				lanes.append(Lane(LANE_WIDTH, HORZ_LANE_LENGTH, 'right', ((DISPLAY_WIDTH // 2 - LANE_WIDTH) // 2, (DISPLAY_HEIGHT + LANE_WIDTH) // 2), screen))
-				lanes.append(Lane(LANE_WIDTH, HORZ_LANE_LENGTH, 'left', ((DISPLAY_WIDTH // 2 - LANE_WIDTH) // 2, (DISPLAY_HEIGHT - LANE_WIDTH) // 2), screen))
-				intersection.add(*lanes)
-			
-				main(control, SIM_LENGTH, frequency, 40, 150, RENDER)
+<<<<<<< HEAD
+		if episode % SAVE == 0:
+			with open(f'tables/{NAME}.npy', 'wb') as table_file:
+				pickle.dump(table_1, table_file)
 
-			print(f'\nAverage frames waited for {control.__name__}: {total_wait // TRIALS}')
-			
+		with open(f'logs/{NAME}.txt', 'a') as file:
+			file.write(f'\n[{str(episode + 1).zfill(4)}] Average frames waited: {total_wait}')
 
+		if total_wait <= GOAL and episode >= EPISODES:
+			break
+=======
+		if episode == 0: start_wait = total_wait
+>>>>>>> d7063b3b83a5f01b86467f8c0c906e4a4acd70b5
+
+		if END_EPSILON_DECAYING >= episode >= START_EPSILON_DECAYING:
+			epsilon -= epsilon_decay_value
+
+<<<<<<< HEAD
+		episode += 1
+
+	with open(f'tables/{NAME}.npy', 'wb') as table_file:
+				pickle.dump(table_1, table_file)
+
+=======
+
+	with open(f'logs/{NAME}.txt', 'a') as file:
+		file.write(f'\n[START] Average frames waited: {start_wait}')
+		file.write(f'\n[END] Average frames waited: {total_wait}')
+	with open(f'tables/{NAME}.npy', 'wb') as table_file:
+		pickle.dump(table_2, table_file)
+>>>>>>> d7063b3b83a5f01b86467f8c0c906e4a4acd70b5
 	pygame.quit()
 	quit()

@@ -1,0 +1,2 @@
+[START] Average frames waited: 0
+[END] Average frames waited: 493
