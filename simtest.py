@@ -7,12 +7,19 @@ import subprocess
 import platform
 import pickle
 import numpy as np
+<<<<<<< HEAD
 from argparse import ArgumentParser
 #from dqn import DQNAgent
 from sim.simobjects import *
 
 def main(control, sim_length, frequency, dmin, dmax, render):
 	global screen, clock, reverse, lanes, intersection, cars, intersection, total_wait, count, trial_reward, \
+=======
+from sim.simobjects import *
+
+def main(control, sim_length, frequency, dmin, dmax, render):
+	global screen, clock, reverse, lanes, intersection, cars, intersection, total_wait, count, \
+>>>>>>> a5c2fc7961c043221138ed8771d55c24576bc46e
 	LANE_WIDTH, SPEED, SCREEN_SIZE
 
 	def approx(p1, p2):
@@ -117,7 +124,11 @@ def main(control, sim_length, frequency, dmin, dmax, render):
 				total_wait += 1
 
 		control(frequency, dmin, dmax, total_wait)
+<<<<<<< HEAD
 		trial_reward += get_reward()
+=======
+
+>>>>>>> a5c2fc7961c043221138ed8771d55c24576bc46e
 
 		intersection.update(cars.sprites())
 		cars.update(intersection.sprites())
@@ -199,8 +210,16 @@ if __name__ == '__main__':
 				hcars += len(l.cars)
 			for l in vlanes:
 				vcars += len(l.cars)
+<<<<<<< HEAD
 			return (min(hcars, 7), min(vcars, 7))
 			return (hcars, vcars)
+=======
+<<<<<<< HEAD
+			return (min(hcars, 7), min(vcars, 7))
+=======
+			return (hcars, vcars)
+>>>>>>> d7063b3b83a5f01b86467f8c0c906e4a4acd70b5
+>>>>>>> a5c2fc7961c043221138ed8771d55c24576bc46e
 
 		hlanes = [lanes[2], lanes[6]]
 		vlanes = [lanes[0], lanes[4]]
@@ -209,6 +228,7 @@ if __name__ == '__main__':
 		action = np.argmax(table[state])
 		middle.flow = ACTIONS[action]
 
+<<<<<<< HEAD
 	def deep_q_control(frequency, *args):
 		''' Traffic control using deep q learning '''
 		global action, old_state, episode_reward
@@ -245,6 +265,8 @@ if __name__ == '__main__':
 	if args.get('model', None):
 		agent = DQNAgent('test')
 		agent.load(args['model'])
+=======
+>>>>>>> a5c2fc7961c043221138ed8771d55c24576bc46e
 
 	reverse = lambda flow: {'horizontal': 'vertical'}.get(flow, 'horizontal')
 
@@ -264,6 +286,7 @@ if __name__ == '__main__':
 
 	CENTER = (DISPLAY_WIDTH // 2, DISPLAY_HEIGHT // 2)
 
+<<<<<<< HEAD
 	SPEED = 8
 	TRIALS = 2
 	SIM_LENGTH = 300
@@ -275,12 +298,35 @@ if __name__ == '__main__':
 
 	controls = [timed, custom]
 	frequencies = [88]
+=======
+	SPEED = 16
+<<<<<<< HEAD
+	TRIALS = 20
+=======
+	TRIALS = 5
+>>>>>>> d7063b3b83a5f01b86467f8c0c906e4a4acd70b5
+	SIM_LENGTH = 500
+
+	ACTIONS = ['horizontal', 'vertical']
+
+	RENDER = True
+
+	with open(sys.argv[1], 'rb') as table_file:
+		table = pickle.load(table_file)
+
+
+	controls = [actuated, custom, q_control]
+	frequencies = [30]
+>>>>>>> a5c2fc7961c043221138ed8771d55c24576bc46e
 
 	pygame.init()
 	screen = pygame.display.set_mode((DISPLAY_WIDTH, DISPLAY_HEIGHT))
 	pygame.display.set_caption('Simulation')
+<<<<<<< HEAD
 
 	
+=======
+>>>>>>> a5c2fc7961c043221138ed8771d55c24576bc46e
 
 	# Iterate through each combination of the chosen control methods and frequencies
 	for control in controls:
@@ -289,6 +335,10 @@ if __name__ == '__main__':
 		for frequency in frequencies:
 
 			count = 0
+<<<<<<< HEAD
+=======
+			total_wait = 0
+>>>>>>> a5c2fc7961c043221138ed8771d55c24576bc46e
 			duration = 0
 
 			for i in range(TRIALS):
@@ -313,6 +363,7 @@ if __name__ == '__main__':
 				intersection.add(*lanes)
 			
 				main(control, SIM_LENGTH, frequency, 40, 150, RENDER)
+<<<<<<< HEAD
 				rewards.append(trial_reward)
 				waits.append(total_wait)
 
@@ -322,6 +373,10 @@ if __name__ == '__main__':
 			print(f'Max: {max(rewards)}')
 			print(f'Wait: {sum(waits)/TRIALS}')
 
+=======
+
+			print(f'\nAverage frames waited for {control.__name__}: {total_wait // TRIALS}')
+>>>>>>> a5c2fc7961c043221138ed8771d55c24576bc46e
 			
 
 	pygame.quit()
